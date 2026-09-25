@@ -1,0 +1,486 @@
+@import "tailwindcss";
+
+/* =========================================================
+   PROPERTYTODAY - GLOBAL BRAND THEME
+   ========================================================= */
+
+:root {
+  /* =========================
+     BRAND COLORS
+     ========================= */
+
+  /* Primary - Propertytoday Red */
+  --color-primary: #c8101e;
+  --color-primary-hover: #a50d18;
+  --color-primary-light: #fde8ea;
+  --color-primary-dark: #850b13;
+
+  /* Secondary - Propertytoday Gold */
+  --color-secondary: #ffd21f;
+  --color-secondary-hover: #e5ad00;
+  --color-secondary-light: #fff8d6;
+  --color-secondary-dark: #c99100;
+
+  /* Brand Navy */
+  --color-navy: #071d49;
+  --color-navy-light: #12396b;
+  --color-navy-dark: #04132f;
+
+  /* =========================
+     BACKGROUND COLORS
+     ========================= */
+
+  --color-background: #ffffff;
+  --color-background-soft: #f8fafc;
+  --color-background-muted: #f1f5f9;
+
+  --color-card: #ffffff;
+  --color-card-hover: #fffdf5;
+
+  /* =========================
+     TEXT COLORS
+     ========================= */
+
+  --color-text: #172033;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-light: #94a3b8;
+  --color-text-white: #ffffff;
+
+  /* =========================
+     BORDER COLORS
+     ========================= */
+
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-border-dark: #cbd5e1;
+
+  /* =========================
+     STATUS COLORS
+     ========================= */
+
+  --color-success: #16a34a;
+  --color-success-light: #dcfce7;
+
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+
+  --color-danger: #dc2626;
+  --color-danger-light: #fee2e2;
+
+  --color-info: #2563eb;
+  --color-info-light: #dbeafe;
+
+  /* =========================
+     PROPERTY CATEGORY COLORS
+     ========================= */
+
+  --color-residential: #c8101e;
+  --color-commercial: #071d49;
+  --color-land: #16a34a;
+  --color-rental: #2563eb;
+  --color-investment: #9333ea;
+
+  /* =========================
+     GRADIENTS
+     ========================= */
+
+  --gradient-primary: linear-gradient(
+    135deg,
+    #c8101e 0%,
+    #a50d18 100%
+  );
+
+  --gradient-gold: linear-gradient(
+    135deg,
+    #ffd21f 0%,
+    #e5ad00 100%
+  );
+
+  --gradient-brand: linear-gradient(
+    135deg,
+    #c8101e 0%,
+    #ffd21f 100%
+  );
+
+  --gradient-navy: linear-gradient(
+    135deg,
+    #071d49 0%,
+    #12396b 100%
+  );
+
+  --gradient-hero: linear-gradient(
+    135deg,
+    rgba(7, 29, 73, 0.96) 0%,
+    rgba(7, 29, 73, 0.82) 45%,
+    rgba(200, 16, 30, 0.75) 100%
+  );
+
+  /* =========================
+     SHADOWS
+     ========================= */
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  --shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.10);
+
+  --shadow-xl: 0 20px 50px rgba(15, 23, 42, 0.14);
+
+  --shadow-primary: 0 10px 25px rgba(200, 16, 30, 0.20);
+
+  --shadow-gold: 0 10px 25px rgba(255, 210, 31, 0.25);
+
+  /* =========================
+     RADIUS
+     ========================= */
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  /* =========================
+     TRANSITIONS
+     ========================= */
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+}
+
+
+/* =========================================================
+   GLOBAL BASE
+   ========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+
+  background-color: var(--color-background);
+  color: var(--color-text);
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* =========================================================
+   PROPERTYTODAY COMMON UTILITIES
+   ========================================================= */
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-secondary {
+  color: var(--color-secondary);
+}
+
+.text-navy {
+  color: var(--color-navy);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+
+.bg-navy {
+  background-color: var(--color-navy);
+}
+
+.bg-soft {
+  background-color: var(--color-background-soft);
+}
+
+.border-primary {
+  border-color: var(--color-primary);
+}
+
+.border-secondary {
+  border-color: var(--color-secondary);
+}
+
+
+/* =========================================================
+   BRAND GRADIENTS
+   ========================================================= */
+
+.bg-brand-gradient {
+  background: var(--gradient-brand);
+}
+
+.bg-primary-gradient {
+  background: var(--gradient-primary);
+}
+
+.bg-gold-gradient {
+  background: var(--gradient-gold);
+}
+
+.bg-navy-gradient {
+  background: var(--gradient-navy);
+}
+
+
+/* =========================================================
+   COMMON BUTTONS
+   ========================================================= */
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-text-white);
+
+  transition:
+    background var(--transition-normal),
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal);
+
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--color-secondary);
+  color: var(--color-navy);
+
+  transition:
+    background var(--transition-normal),
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal);
+
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-secondary:hover {
+  background: var(--color-secondary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+
+  transition: all var(--transition-normal);
+}
+
+.btn-outline:hover {
+  background: var(--color-primary);
+  color: var(--color-text-white);
+}
+
+
+/* =========================================================
+   PROPERTY CARD
+   ========================================================= */
+
+.property-card {
+  background: var(--color-card);
+
+  border: 1px solid var(--color-border);
+
+  border-radius: var(--radius-xl);
+
+  box-shadow: var(--shadow-md);
+
+  transition:
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal),
+    border-color var(--transition-normal);
+}
+
+.property-card:hover {
+  transform: translateY(-5px);
+
+  box-shadow: var(--shadow-xl);
+
+  border-color: rgba(200, 16, 30, 0.25);
+}
+
+
+/* =========================================================
+   CUSTOM SCROLLBAR
+   ========================================================= */
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    var(--color-primary)
+    var(--color-background-muted);
+}
+
+
+/* Chrome, Edge, Safari */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--color-background-muted);
+
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    var(--color-primary),
+    var(--color-secondary)
+  );
+
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    var(--color-primary-hover),
+    var(--color-secondary-dark)
+  );
+}
+
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+::selection {
+  background: var(--color-secondary);
+  color: var(--color-navy);
+}
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+
+/* =========================================================
+   PROPERTY BADGES
+   ========================================================= */
+
+.badge-sale {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.badge-rent {
+  background-color: var(--color-info-light);
+  color: var(--color-info);
+}
+
+.badge-land {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.badge-commercial {
+  background-color: #e8eef8;
+  color: var(--color-navy);
+}
+
+.badge-investment {
+  background-color: #f3e8ff;
+  color: var(--color-investment);
+}
+
+
+/* =========================================================
+   SECTION STYLING
+   ========================================================= */
+
+.section-soft {
+  background-color: var(--color-background-soft);
+}
+
+.section-navy {
+  background: var(--gradient-navy);
+  color: var(--color-text-white);
+}
+
+.section-brand {
+  background: var(--gradient-brand);
+}
+
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.container-property {
+  width: 100%;
+  max-width: 1440px;
+
+  margin-left: auto;
+  margin-right: auto;
+
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-property {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-property {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+.hover-lift {
+  transition:
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
