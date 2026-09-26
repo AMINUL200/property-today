@@ -16,7 +16,6 @@ const HomePageBuySellRentSection = () => {
       path: "/buy",
       image: "https://picsum.photos/seed/ptoday-buy-panel/900/1200",
       icon: Home,
-      color: "var(--color-primary)",
       overlay:
         "linear-gradient(180deg, rgba(7,29,73,0.15) 0%, rgba(7,29,73,0.85) 60%, rgba(200,16,30,0.9) 100%)",
     },
@@ -30,7 +29,6 @@ const HomePageBuySellRentSection = () => {
       path: "/sell",
       image: "https://picsum.photos/seed/ptoday-sell-panel/900/1200",
       icon: Tag,
-      color: "var(--color-secondary-dark)",
       overlay:
         "linear-gradient(180deg, rgba(7,29,73,0.15) 0%, rgba(7,29,73,0.85) 60%, rgba(229,173,0,0.9) 100%)",
     },
@@ -44,7 +42,6 @@ const HomePageBuySellRentSection = () => {
       path: "/rent",
       image: "https://picsum.photos/seed/ptoday-rent-panel/900/1200",
       icon: KeyRound,
-      color: "var(--color-rental)",
       overlay:
         "linear-gradient(180deg, rgba(7,29,73,0.15) 0%, rgba(7,29,73,0.85) 60%, rgba(37,99,235,0.9) 100%)",
     },
@@ -122,9 +119,9 @@ const HomePageBuySellRentSection = () => {
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-110"
                   />
 
-                  {/* Colored gradient overlay */}
+                  {/* Colored gradient overlay — darker at bottom, fades in stronger on hover */}
                   <span
-                    className="absolute inset-0 transition-opacity duration-500 group-hover:opacity-95"
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ background: overlay }}
                   />
 
@@ -138,9 +135,41 @@ const HomePageBuySellRentSection = () => {
                     }}
                   />
 
-                  {/* Content */}
-                  <div className="relative h-full flex flex-col justify-end p-7 lg:p-9 text-white">
-                    {/* Eyebrow badge */}
+                  {/* ---------- Always-visible eyebrow badge (top-left) ---------- */}
+                  <span className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[11px] font-extrabold uppercase tracking-widest text-white shadow-[var(--shadow-md)] transition-all duration-500 group-hover:bg-white group-hover:text-[var(--color-navy)] group-hover:border-white">
+                    <Icon className="w-3.5 h-3.5" />
+                    {eyebrow}
+                  </span>
+
+                  {/* ---------- Always-visible hint at bottom (when collapsed) ---------- */}
+                  <span className="absolute bottom-6 left-6 right-6 z-20 flex items-center justify-between transition-all duration-500 group-hover:opacity-0 group-hover:translate-y-4">
+                    <span className="text-sm font-semibold uppercase tracking-[0.2em] text-white/90 drop-shadow-lg">
+                      {eyebrow}
+                    </span>
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white">
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </span>
+
+                  {/* ---------- Hover-revealed content panel (slides up from bottom) ---------- */}
+                  <div
+                    className="
+                      absolute inset-x-0 bottom-0 z-10 p-7 lg:p-9 text-white
+                      translate-y-full opacity-0
+                      group-hover:translate-y-0 group-hover:opacity-100
+                      transition-all duration-[700ms] ease-[cubic-bezier(0.65,0,0.35,1)]
+                    "
+                  >
+                    {/* Backdrop panel for readability */}
+                    <span
+                      className="absolute inset-0 -z-10"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, rgba(7,29,73,0) 0%, rgba(7,29,73,0.55) 25%, rgba(7,29,73,0.95) 100%)",
+                      }}
+                    />
+
+                    {/* Eyebrow badge repeated inside content */}
                     <span className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-[11px] font-extrabold uppercase tracking-widest">
                       <Icon className="w-3.5 h-3.5" />
                       {eyebrow}
@@ -152,7 +181,7 @@ const HomePageBuySellRentSection = () => {
                     </h3>
 
                     {/* Divider */}
-                    <span className="mt-4 block h-0.5 w-12 rounded-full bg-white/70 transition-all duration-500 group-hover:w-20" />
+                    <span className="mt-4 block h-0.5 w-12 rounded-full bg-white/70 transition-all duration-700 group-hover:w-20" />
 
                     {/* Description */}
                     <p className="mt-4 text-sm lg:text-base text-white/85 leading-relaxed max-w-[320px]">
@@ -168,9 +197,9 @@ const HomePageBuySellRentSection = () => {
                     </span>
                   </div>
 
-                  {/* Top-right corner accent */}
+                  {/* Top-right corner glow */}
                   <span
-                    className="pointer-events-none absolute -top-16 -right-16 w-52 h-52 rounded-full opacity-25 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
+                    className="pointer-events-none absolute -top-16 -right-16 w-52 h-52 rounded-full opacity-20 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
                     style={{ backgroundColor: "white" }}
                   />
                 </Link>

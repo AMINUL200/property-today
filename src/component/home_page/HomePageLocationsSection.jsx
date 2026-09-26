@@ -4,10 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, ArrowRight, Building2 } from "lucide-react";
 
 /* =========================================================
-   CITY DATA
-   x/y are percentages within the map's viewBox (0–100), derived
-   from each city's real latitude/longitude so the pins line up
-   with the actual India outline below — not eyeballed guesses.
+   CITY DATA — only 5 featured markets
    ========================================================= */
 const CITIES = [
   {
@@ -50,55 +47,10 @@ const CITIES = [
     y: 79.4,
     tags: ["Apartments", "Villas", "Land", "Rentals"],
   },
-  {
-    id: "hyderabad",
-    name: "Hyderabad",
-    count: "2,040+",
-    x: 36.5,
-    y: 64.8,
-    tags: ["Apartments", "Villas", "Commercial", "Land"],
-  },
-  {
-    id: "pune",
-    name: "Pune",
-    count: "1,420+",
-    x: 21.8,
-    y: 60.9,
-    tags: ["Apartments", "Villas", "Commercial", "Plots"],
-  },
-  {
-    id: "ahmedabad",
-    name: "Ahmedabad",
-    count: "980+",
-    x: 17.7,
-    y: 45.7,
-    tags: ["Apartments", "Commercial", "Land", "Rentals"],
-  },
-  {
-    id: "gurgaon",
-    name: "Gurgaon",
-    count: "1,760+",
-    // Nudged a couple of points off its true (near-identical) coordinate
-    // so the pin doesn't sit exactly on top of Delhi's.
-    x: 29,
-    y: 30,
-    tags: ["Apartments", "Commercial", "Luxury", "Rentals"],
-  },
-  {
-    id: "noida",
-    name: "Noida",
-    count: "1,320+",
-    x: 35,
-    y: 29,
-    tags: ["Apartments", "Commercial", "Land", "Rentals"],
-  },
 ];
 
 /* =========================================================
    INDIA OUTLINE
-   Traced from public domain boundary coordinates (mainland),
-   viewBox 0 0 31.5 29.5, so it lines up 1:1 with the CITIES
-   x/y percentages above.
    ========================================================= */
 const INDIA_PATH =
   "M 10.84,1.01 L 11.91,2.18 L 11.81,2.99 L 12.21,3.51 L 12.18,4.02 L 11.46,3.88 L 11.74,4.98 L 12.72,5.62 L 14.11,6.32 L 13.48,6.77 L 13.09,7.71 L 14.06,8.08 L 15.0,8.57 L 16.3,9.14 L 17.68,9.27 L 18.25,9.77 L 19.02,9.87 L 20.23,10.1 L 21.06,10.09 L 21.17,9.69 L 21.04,9.05 L 21.12,8.62 L 21.73,8.41 L 21.81,9.2 L 21.84,9.4 L 22.74,9.78 L 23.37,9.62 L 24.22,9.69 L 25.03,9.66 L 25.1,9.05 L 24.7,8.73 L 25.5,8.6 L 26.41,7.86 L 27.57,7.22 L 28.4,7.47 L 29.12,7.05 L 29.59,7.67 L 29.25,8.09 L 30.33,8.24 L 30.4,8.62 L 30.05,8.8 L 30.13,9.42 L 29.42,9.24 L 28.12,9.93 L 28.16,10.5 L 27.6,11.34 L 27.55,11.82 L 27.11,12.65 L 26.33,12.42 L 26.29,13.46 L 26.06,13.8 L 26.17,14.22 L 25.67,14.46 L 25.15,12.87 L 24.87,12.88 L 24.71,13.51 L 24.16,13.0 L 24.47,12.43 L 24.92,12.37 L 25.38,11.52 L 24.8,11.35 L 23.87,11.37 L 22.92,11.23 L 22.83,10.53 L 22.36,10.49 L 21.56,10.05 L 21.21,10.73 L 21.93,11.26 L 21.31,11.63 L 21.08,12.0 L 21.7,12.27 L 21.53,12.87 L 21.88,13.62 L 22.03,14.44 L 21.89,14.81 L 21.21,14.8 L 19.98,15.0 L 20.03,15.76 L 19.5,16.35 L 18.06,17.02 L 16.94,18.2 L 16.19,18.83 L 15.19,19.48 L 15.19,19.94 L 14.69,20.19 L 13.79,20.55 L 13.32,20.6 L 13.03,21.36 L 13.23,22.66 L 13.29,23.49 L 12.86,24.44 L 12.86,26.14 L 12.34,26.19 L 11.89,26.95 L 12.19,27.28 L 11.28,27.57 L 10.94,28.25 L 10.54,28.53 L 9.59,27.6 L 9.13,26.2 L 8.75,25.19 L 8.4,24.72 L 7.86,23.76 L 7.62,22.51 L 7.44,21.88 L 6.53,20.51 L 6.12,18.57 L 5.82,17.29 L 5.82,16.08 L 5.63,15.14 L 4.18,15.74 L 3.47,15.62 L 2.16,14.41 L 2.64,14.05 L 2.35,13.66 L 1.18,12.81 L 1.84,12.14 L 4.04,12.14 L 3.84,11.28 L 3.28,10.78 L 3.17,10.01 L 2.51,9.56 L 3.62,8.51 L 4.78,8.59 L 5.82,7.54 L 6.45,6.52 L 7.42,5.52 L 7.41,4.81 L 8.26,4.23 L 7.45,3.74 L 7.1,3.06 L 6.75,2.18 L 7.24,1.75 L 8.76,2.0 L 9.87,1.85 L 10.84,1.01 Z";
@@ -162,7 +114,7 @@ const HomePageLocationsSection = () => {
                 }}
               />
 
-              {/* India silhouette — real boundary coordinates, not a stylized blob */}
+              {/* India silhouette */}
               <svg
                 viewBox="0 0 31.5 29.5"
                 className="absolute inset-0 w-full h-full p-4"
@@ -185,8 +137,8 @@ const HomePageLocationsSection = () => {
                 </defs>
               </svg>
 
-              {/* City pins */}
-              {CITIES.map((city) => {
+              {/* City pins — every pin glows and blinks continuously */}
+              {CITIES.map((city, idx) => {
                 const isActive = activeCity.id === city.id;
                 return (
                   <button
@@ -194,31 +146,29 @@ const HomePageLocationsSection = () => {
                     type="button"
                     onClick={() => setActiveCity(city)}
                     aria-label={`Select ${city.name}`}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 group"
+                    className="absolute -translate-x-1/2 -translate-y-1/2 group z-10"
                     style={{ left: `${city.x}%`, top: `${city.y}%` }}
                   >
-                    {/* Ping ring */}
-                    {isActive && (
-                      <span className="absolute inset-0 rounded-full bg-[var(--color-primary)]/30 animate-ping" />
-                    )}
+                   
 
+                   
                     {/* Dot */}
                     <span
                       className={`relative flex items-center justify-center rounded-full transition-all duration-300 ${
                         isActive
-                          ? "w-5 h-5 bg-[var(--color-primary)] ring-4 ring-[var(--color-primary)]/25"
-                          : "w-3.5 h-3.5 bg-[var(--color-navy)]/70 group-hover:bg-[var(--color-primary)] group-hover:scale-125"
+                          ? "w-5 h-5 bg-[var(--color-primary)] ring-4 ring-[var(--color-primary)]/30 shadow-[0_0_20px_rgba(200,16,30,0.85)]"
+                          : "w-4 h-4 bg-[var(--color-primary)] ring-4 ring-[var(--color-primary)]/20 shadow-[0_0_14px_rgba(200,16,30,0.65)] group-hover:scale-125"
                       }`}
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-white" />
                     </span>
 
-                    {/* Label */}
+                    {/* Label — always visible for all 5 cities */}
                     <span
-                      className={`absolute top-full mt-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full transition-all duration-200 ${
+                      className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full transition-all duration-200 ${
                         isActive
-                          ? "bg-[var(--color-primary)] text-white shadow-[var(--shadow-sm)]"
-                          : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] opacity-0 group-hover:opacity-100"
+                          ? "bg-[var(--color-primary)] text-white shadow-[0_0_14px_rgba(200,16,30,0.6)]"
+                          : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] shadow-[var(--shadow-sm)]"
                       }`}
                     >
                       {city.name}
@@ -334,6 +284,36 @@ const HomePageLocationsSection = () => {
           </Link>
         </motion.div>
       </div>
+
+      {/* =========================================================
+          KEYFRAMES — continuous glow + blink for every pin
+          ========================================================= */}
+      <style>{`
+        @keyframes ptGlow {
+          0%, 100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.55;
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.25);
+            opacity: 0.25;
+          }
+        }
+        @keyframes ptBlink {
+          0% {
+            transform: translate(-50%, -50%) scale(0.6);
+            opacity: 0.7;
+          }
+          70% {
+            transform: translate(-50%, -50%) scale(1.9);
+            opacity: 0;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(1.9);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </section>
   );
 };

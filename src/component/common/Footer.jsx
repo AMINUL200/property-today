@@ -97,35 +97,14 @@ const Footer = () => {
           {/* ---------- Brand + Contact (wider on desktop) ---------- */}
           <div className="lg:col-span-2 space-y-5">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)]">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V10.5Z"
-                    fill="white"
-                  />
-                </svg>
-              </div>
-              <div className="leading-none">
-                <h2 className="text-lg font-extrabold tracking-tight">
-                  Property<span className="text-[var(--color-secondary)]">today</span>
-                </h2>
-                <p className="text-[10px] font-medium text-white/60 tracking-wide">
-                  REAL ESTATE
-                </p>
-              </div>
+            <div className="flex items-center">
+              <img
+                src="/image/Footer_logo.png"
+                alt="Propertytoday"
+                className="w-[220px] h-auto object-contain object-left"
+              />
             </div>
-
-            {/* Tagline */}
-            <p className="text-base font-serif italic text-white/80 max-w-xs leading-relaxed">
-              "Your Next Move, Today."
-            </p>
+            
 
             {/* Get In Touch */}
             <div>
@@ -161,11 +140,31 @@ const Footer = () => {
             {/* Social Icons */}
             <div className="flex items-center gap-2 pt-1">
               {[
-                { icon: <Facebook className="w-4 h-4" />, url: "#", label: "Facebook" },
-                { icon: <Twitter className="w-4 h-4" />, url: "#", label: "Twitter" },
-                { icon: <Instagram className="w-4 h-4" />, url: "#", label: "Instagram" },
-                { icon: <Linkedin className="w-4 h-4" />, url: "#", label: "LinkedIn" },
-                { icon: <Youtube className="w-4 h-4" />, url: "#", label: "YouTube" },
+                {
+                  icon: <Facebook className="w-4 h-4" />,
+                  url: "#",
+                  label: "Facebook",
+                },
+                {
+                  icon: <Twitter className="w-4 h-4" />,
+                  url: "#",
+                  label: "Twitter",
+                },
+                {
+                  icon: <Instagram className="w-4 h-4" />,
+                  url: "#",
+                  label: "Instagram",
+                },
+                {
+                  icon: <Linkedin className="w-4 h-4" />,
+                  url: "#",
+                  label: "LinkedIn",
+                },
+                {
+                  icon: <Youtube className="w-4 h-4" />,
+                  url: "#",
+                  label: "YouTube",
+                },
               ].map((social, i) => (
                 <a
                   key={i}
@@ -249,8 +248,8 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/60">
             <p>
               © {new Date().getFullYear()}{" "}
-              <span className="font-semibold text-white">Propertytoday</span>. All
-              Rights Reserved.
+              <span className="font-semibold text-white">Propertytoday</span>.
+              All Rights Reserved.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">

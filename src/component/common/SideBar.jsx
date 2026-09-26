@@ -6,17 +6,17 @@ import {
   Home,
   Search,
   Building2,
-  Key,
   Tag,
-  Store,
-  LandPlot,
+  KeyRound,
+  Map,
+  Sparkles,
   Wrench,
   MapPin,
   Info,
+  Phone,
   User,
   LogOut,
   LayoutDashboard,
-  Heart,
   PlusCircle,
 } from "lucide-react";
 
@@ -25,53 +25,108 @@ const SideBar = ({ toggleMenu, isOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // PropertyToday sidebar navigation links with icons
+  // Sidebar links — mirrors the Navbar exactly (same labels, same paths)
   const sidebarLinks = [
+    {
+      id: "home",
+      label: "Home",
+      path: "/",
+      icon: <Home className="w-5 h-5" />,
+    },
     {
       id: "buy",
       label: "Buy",
       icon: <Building2 className="w-5 h-5" />,
       dropdown: [
-        { id: "buy-residential", label: "Residential", path: "/buy/residential" },
+        {
+          id: "buy-residential",
+          label: "Residential",
+          path: "/buy/residential",
+        },
         { id: "buy-apartments", label: "Apartments", path: "/buy/apartments" },
         { id: "buy-villas", label: "Villas", path: "/buy/villas" },
         { id: "buy-plots", label: "Plots", path: "/buy/plots" },
-      ],
-    },
-    {
-      id: "rent",
-      label: "Rent",
-      icon: <Key className="w-5 h-5" />,
-      dropdown: [
-        { id: "rent-residential", label: "Residential", path: "/rent/residential" },
-        { id: "rent-commercial", label: "Commercial", path: "/rent/commercial" },
-        { id: "rent-pg", label: "PG / Hostels", path: "/rent/pg" },
+        { id: "buy-commercial", label: "Commercial", path: "/buy/commercial" },
       ],
     },
     {
       id: "sell",
       label: "Sell",
-      path: "/sell",
       icon: <Tag className="w-5 h-5" />,
+      dropdown: [
+        { id: "sell-property", label: "Sell Your Property", path: "/sell" },
+        {
+          id: "list-property",
+          label: "List Your Property",
+          path: "/list-property",
+        },
+        {
+          id: "rent-property",
+          label: "Rent / Lease Your Property",
+          path: "/list-property/rent",
+        },
+      ],
     },
     {
-      id: "commercial",
-      label: "Commercial",
-      icon: <Store className="w-5 h-5" />,
+      id: "rent",
+      label: "Rent",
+      icon: <KeyRound className="w-5 h-5" />,
       dropdown: [
-        { id: "com-office", label: "Office Spaces", path: "/commercial/office" },
-        { id: "com-shop", label: "Shops & Showrooms", path: "/commercial/shop" },
-        { id: "com-warehouse", label: "Warehouses", path: "/commercial/warehouse" },
+        {
+          id: "rent-residential",
+          label: "Residential",
+          path: "/rent/residential",
+        },
+        {
+          id: "rent-commercial",
+          label: "Commercial",
+          path: "/rent/commercial",
+        },
+        { id: "rent-pg", label: "PG / Hostels", path: "/rent/pg" },
       ],
     },
     {
       id: "land",
-      label: "Land",
-      icon: <LandPlot className="w-5 h-5" />,
+      label: "Land & Plots",
+      icon: <Map className="w-5 h-5" />,
       dropdown: [
-        { id: "land-agricultural", label: "Agricultural", path: "/land/agricultural" },
-        { id: "land-residential", label: "Residential Plots", path: "/land/residential" },
-        { id: "land-commercial", label: "Commercial Land", path: "/land/commercial" },
+        {
+          id: "land-agricultural",
+          label: "Agricultural",
+          path: "/land/agricultural",
+        },
+        {
+          id: "land-residential",
+          label: "Residential Plots",
+          path: "/land/residential",
+        },
+        {
+          id: "land-commercial",
+          label: "Commercial Land",
+          path: "/land/commercial",
+        },
+      ],
+    },
+    {
+      id: "new-projects",
+      label: "New Projects",
+      icon: <Sparkles className="w-5 h-5" />,
+      dropdown: [
+        {
+          id: "np-ongoing",
+          label: "Ongoing Projects",
+          path: "/new-projects/ongoing",
+        },
+        {
+          id: "np-upcoming",
+          label: "Upcoming Projects",
+          path: "/new-projects/upcoming",
+        },
+        {
+          id: "np-completed",
+          label: "Completed Projects",
+          path: "/new-projects/completed",
+        },
       ],
     },
     {
@@ -79,10 +134,56 @@ const SideBar = ({ toggleMenu, isOpen }) => {
       label: "Services",
       icon: <Wrench className="w-5 h-5" />,
       dropdown: [
-        { id: "svc-valuation", label: "Property Valuation", path: "/services/valuation" },
-        { id: "svc-legal", label: "Legal Assistance", path: "/services/legal" },
-        { id: "svc-loans", label: "Home Loans", path: "/services/loans" },
-        { id: "svc-interior", label: "Interior Design", path: "/services/interior" },
+        {
+          id: "svc-buying",
+          label: "Property Buying Assistance",
+          path: "/services/property-buying",
+        },
+        {
+          id: "svc-selling",
+          label: "Property Selling",
+          path: "/services/property-selling",
+        },
+        {
+          id: "svc-rental",
+          label: "Property Rental & Leasing",
+          path: "/services/property-rental",
+        },
+        {
+          id: "svc-land-plots",
+          label: "Land & Plot Deals",
+          path: "/services/land-plot-deals",
+        },
+        {
+          id: "svc-verification",
+          label: "Property Verification",
+          path: "/services/property-verification",
+        },
+        {
+          id: "svc-documentation",
+          label: "Documentation Assistance",
+          path: "/services/documentation",
+        },
+        {
+          id: "svc-valuation",
+          label: "Property Valuation",
+          path: "/services/valuation",
+        },
+        {
+          id: "svc-site-visit",
+          label: "Site Visit Assistance",
+          path: "/services/site-visit",
+        },
+        {
+          id: "svc-management",
+          label: "Property Management",
+          path: "/services/property-management",
+        },
+        {
+          id: "svc-investment",
+          label: "Investment Assistance",
+          path: "/services/investment",
+        },
       ],
     },
     {
@@ -93,9 +194,15 @@ const SideBar = ({ toggleMenu, isOpen }) => {
     },
     {
       id: "about",
-      label: "About",
+      label: "About Us",
       path: "/about",
       icon: <Info className="w-5 h-5" />,
+    },
+    {
+      id: "contact",
+      label: "Contact",
+      path: "/contact",
+      icon: <Phone className="w-5 h-5" />,
     },
   ];
 
@@ -136,62 +243,24 @@ const SideBar = ({ toggleMenu, isOpen }) => {
   // Check if current path matches
   const isActivePath = (path) => location.pathname === path;
 
-  // Render dropdown items recursively
+  // Render dropdown item
   const renderDropdownItem = (item, level = 1) => {
-    const hasSubDropdown = item.dropdown && item.dropdown.length > 0;
-    const dropdownKey = `${item.id}-sub-${level}`;
-    const isOpen = openDropdowns[dropdownKey];
     const isActive = item.path && isActivePath(item.path);
 
     return (
       <div key={item.id} className="relative">
-        {hasSubDropdown ? (
-          <div
-            className={`flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer transition-all duration-200 ${
-              level > 1 ? "pl-10" : "pl-6"
-            } ${
-              isOpen
-                ? "bg-[var(--color-primary-light)] text-[var(--color-primary)]"
-                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)]/50 hover:text-[var(--color-primary)]"
-            }`}
-            onClick={() => toggleDropdown(dropdownKey)}
-          >
-            <span className="font-medium">{item.label}</span>
-            <ChevronRight
-              className={`w-4 h-4 transition-transform duration-300 ${
-                isOpen ? "rotate-90" : ""
-              }`}
-            />
-          </div>
-        ) : (
-          <div
-            className={`flex items-center px-4 py-2.5 text-sm cursor-pointer transition-all duration-200 ${
-              level > 1 ? "pl-10" : "pl-6"
-            } ${
-              isActive
-                ? "bg-[var(--color-primary)] text-white font-semibold"
-                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)]/50 hover:text-[var(--color-primary)]"
-            }`}
-            onClick={() => handleNavClick(item.path)}
-          >
-            <span className="font-medium">{item.label}</span>
-          </div>
-        )}
-
-        {/* Nested dropdown */}
-        {hasSubDropdown && (
-          <div
-            className={`overflow-hidden transition-all duration-300 ${
-              isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-            }`}
-          >
-            <div className="bg-[var(--color-background-soft)] border-l-2 border-[var(--color-primary)]/30 ml-4">
-              {item.dropdown.map((subItem) =>
-                renderDropdownItem(subItem, level + 1)
-              )}
-            </div>
-          </div>
-        )}
+        <div
+          className={`flex items-center px-4 py-2.5 text-sm cursor-pointer transition-all duration-200 ${
+            level > 1 ? "pl-10" : "pl-6"
+          } ${
+            isActive
+              ? "bg-[var(--color-primary)] text-white font-semibold"
+              : "text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)]/50 hover:text-[var(--color-primary)]"
+          }`}
+          onClick={() => handleNavClick(item.path)}
+        >
+          <span className="font-medium">{item.label}</span>
+        </div>
       </div>
     );
   };
@@ -214,7 +283,13 @@ const SideBar = ({ toggleMenu, isOpen }) => {
             onClick={() => toggleDropdown(item.id)}
           >
             <div className="flex items-center gap-3">
-              <span className={isOpen ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)]"}>
+              <span
+                className={
+                  isOpen
+                    ? "text-[var(--color-primary)]"
+                    : "text-[var(--color-text-muted)]"
+                }
+              >
                 {item.icon}
               </span>
               <span className="font-semibold">{item.label}</span>
@@ -234,7 +309,11 @@ const SideBar = ({ toggleMenu, isOpen }) => {
             }`}
             onClick={() => handleNavClick(item.path)}
           >
-            <span className={isActive ? "text-white" : "text-[var(--color-text-muted)]"}>
+            <span
+              className={
+                isActive ? "text-white" : "text-[var(--color-text-muted)]"
+              }
+            >
               {item.icon}
             </span>
             <span className="font-semibold">{item.label}</span>
@@ -245,11 +324,13 @@ const SideBar = ({ toggleMenu, isOpen }) => {
         {hasDropdown && (
           <div
             className={`overflow-hidden transition-all duration-300 ${
-              isOpen ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+              isOpen ? "max-h-[900px] opacity-100" : "max-h-0 opacity-0"
             }`}
           >
             <div className="mt-1">
-              {item.dropdown.map((dropdownItem) => renderDropdownItem(dropdownItem))}
+              {item.dropdown.map((dropdownItem) =>
+                renderDropdownItem(dropdownItem),
+              )}
             </div>
           </div>
         )}
@@ -275,30 +356,20 @@ const SideBar = ({ toggleMenu, isOpen }) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[var(--color-border)] bg-[var(--gradient-navy)]">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)]">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V10.5Z"
-                  fill="white"
-                />
-              </svg>
-            </div>
-            <div className="leading-none">
-              <h2 className="text-base font-extrabold tracking-tight text-[var(--color-primary)]">
-                Property<span className="text-[var(--color-secondary)]">today</span>
-              </h2>
-              <p className="text-[10px] font-medium text-[var(--color-primary)] tracking-wide">
-                REAL ESTATE
-              </p>
-            </div>
+          <div
+            className="flex items-center cursor-pointer select-none shrink-0"
+            onClick={() => {
+              navigate("/");
+              toggleMenu();
+            }}
+          >
+            <img
+              src="/image/Navbar_logo.png"
+              alt="Propertytoday"
+              className="h-10 w-auto object-contain"
+            />
           </div>
+
           <button
             onClick={toggleMenu}
             className="p-2 rounded-[var(--radius-md)] hover:bg-white/10 transition-colors"
@@ -307,7 +378,6 @@ const SideBar = ({ toggleMenu, isOpen }) => {
             <X className="w-5 h-5 " />
           </button>
         </div>
-
         {/* Navigation Links */}
         <nav className="flex-1 overflow-y-auto py-4 px-2 h-[calc(100vh-200px)] custom-scrollbar">
           {sidebarLinks.map((item) => renderNavItem(item))}
@@ -326,7 +396,7 @@ const SideBar = ({ toggleMenu, isOpen }) => {
                 className="w-full bg-[var(--gradient-gold)] text-[var(--color-navy)] px-6 py-3 rounded-[var(--radius-md)] shadow-[var(--shadow-gold)] hover:brightness-105 transition-all duration-300 flex items-center justify-center gap-2 font-bold"
               >
                 <PlusCircle className="w-5 h-5" />
-                <span>List Property</span>
+                <span>List Your Property</span>
               </button>
 
               {/* Login button – primary red */}

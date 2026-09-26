@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -34,6 +34,7 @@ import {
   Star,
   BadgeCheck,
 } from "lucide-react";
+import PageLoader from "../../component/common/PageLoader";
 
 /* =========================================================
    PLACEHOLDER DATA
@@ -105,7 +106,9 @@ const PropertyDetails = () => {
   const nextImage = () =>
     setActiveImage((i) => (i + 1) % PROPERTY.images.length);
   const prevImage = () =>
-    setActiveImage((i) => (i - 1 + PROPERTY.images.length) % PROPERTY.images.length);
+    setActiveImage(
+      (i) => (i - 1 + PROPERTY.images.length) % PROPERTY.images.length,
+    );
 
   // Spec chips under the header
   const specs = [
@@ -126,14 +129,34 @@ const PropertyDetails = () => {
     show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
   };
 
+  const [loader, setLoader] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoader(false);
+    }, 1000);
+
+    // Cleanup timer when component unmounts
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loader for 1 second
+  if (loader) {
+    return <PageLoader />;
+  }
+
   return (
     <div className="bg-[var(--color-background-soft)] min-h-screen pt-24 lg:pt-28 pb-16">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
         {/* ---------- Breadcrumb ---------- */}
         <nav className="text-xs text-[var(--color-text-muted)] mb-4 flex items-center gap-2 flex-wrap">
-          <Link to="/" className="hover:text-[var(--color-primary)]">Home</Link>
+          <Link to="/" className="hover:text-[var(--color-primary)]">
+            Home
+          </Link>
           <span>/</span>
-          <Link to="/buy" className="hover:text-[var(--color-primary)]">Buy</Link>
+          <Link to="/buy" className="hover:text-[var(--color-primary)]">
+            Buy
+          </Link>
           <span>/</span>
           <span className="text-[var(--color-text)] font-semibold">
             {PROPERTY.title}
@@ -176,7 +199,9 @@ const PropertyDetails = () => {
                       : "text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
                   }`}
                 >
-                  <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+                  <Heart
+                    className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`}
+                  />
                 </button>
                 <button
                   type="button"
@@ -233,7 +258,11 @@ const PropertyDetails = () => {
                       : "border-transparent opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={img}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                   {i === 0 && (
                     <span className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <Video className="w-4 h-4 text-white" />
@@ -550,9 +579,7 @@ const PropertyDetails = () => {
               variants={itemVariants}
               className="bg-[var(--color-navy)] text-white rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-6 relative overflow-hidden"
             >
-              <span
-                className="pointer-events-none absolute -top-16 -right-16 w-44 h-44 rounded-full bg-[var(--color-secondary)]/25 blur-3xl"
-              />
+              <span className="pointer-events-none absolute -top-16 -right-16 w-44 h-44 rounded-full bg-[var(--color-secondary)]/25 blur-3xl" />
 
               <h3 className="relative text-base font-bold">
                 Estimate Your EMI

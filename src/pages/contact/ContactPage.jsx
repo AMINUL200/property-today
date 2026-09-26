@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -19,6 +19,7 @@ import {
   Youtube,
   ArrowRight,
 } from "lucide-react";
+import PageLoader from "../../component/common/PageLoader";
 
 const ContactPage = () => {
   const [form, setForm] = useState({
@@ -95,14 +96,34 @@ const ContactPage = () => {
     show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
   };
 
+  const [loader, setLoader] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoader(false);
+    }, 1000);
+
+    // Cleanup timer when component unmounts
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loader for 1 second
+  if (loader) {
+    return <PageLoader />;
+  }
+
   return (
     <div className="bg-[var(--color-background-soft)] min-h-screen pt-24 lg:pt-28 pb-16">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
         {/* ---------- Breadcrumb ---------- */}
         <nav className="text-xs text-[var(--color-text-muted)] mb-4 flex items-center gap-2 flex-wrap">
-          <Link to="/" className="hover:text-[var(--color-primary)]">Home</Link>
+          <Link to="/" className="hover:text-[var(--color-primary)]">
+            Home
+          </Link>
           <span>/</span>
-          <span className="text-[var(--color-text)] font-semibold">Contact</span>
+          <span className="text-[var(--color-text)] font-semibold">
+            Contact
+          </span>
         </nav>
 
         {/* =========================================================
@@ -139,47 +160,55 @@ const ContactPage = () => {
           animate="show"
           className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
         >
-          {contactCards.map(({ id, icon: Icon, label, lines, action, color }) => (
-            <motion.div
-              key={id}
-              variants={itemVariants}
-              className="group bg-white rounded-[var(--radius-xl)] border border-[var(--color-border-light)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col"
-            >
-              <span
-                className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center shadow-[var(--shadow-md)] mb-4"
-                style={{ backgroundColor: color }}
+          {contactCards.map(
+            ({ id, icon: Icon, label, lines, action, color }) => (
+              <motion.div
+                key={id}
+                variants={itemVariants}
+                className="group bg-white rounded-[var(--radius-xl)] border border-[var(--color-border-light)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col"
               >
-                <Icon className="w-5 h-5 text-white" />
-              </span>
-
-              <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                {label}
-              </h3>
-
-              <div className="mt-2 space-y-1 flex-1">
-                {lines.map((line) => (
-                  <p
-                    key={line}
-                    className="text-sm font-semibold text-[var(--color-navy)] leading-snug"
-                  >
-                    {line}
-                  </p>
-                ))}
-              </div>
-
-              {action && (
-                <a
-                  href={action.href}
-                  target={action.href.startsWith("http") ? "_blank" : undefined}
-                  rel={action.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
+                <span
+                  className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center shadow-[var(--shadow-md)] mb-4"
+                  style={{ backgroundColor: color }}
                 >
-                  {action.label}
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </a>
-              )}
-            </motion.div>
-          ))}
+                  <Icon className="w-5 h-5 text-white" />
+                </span>
+
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+                  {label}
+                </h3>
+
+                <div className="mt-2 space-y-1 flex-1">
+                  {lines.map((line) => (
+                    <p
+                      key={line}
+                      className="text-sm font-semibold text-[var(--color-navy)] leading-snug"
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
+
+                {action && (
+                  <a
+                    href={action.href}
+                    target={
+                      action.href.startsWith("http") ? "_blank" : undefined
+                    }
+                    rel={
+                      action.href.startsWith("http")
+                        ? "noopener noreferrer"
+                        : undefined
+                    }
+                    className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
+                  >
+                    {action.label}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </motion.div>
+            ),
+          )}
         </motion.div>
 
         {/* =========================================================
@@ -400,13 +429,17 @@ const ContactPage = () => {
 
               <ul className="space-y-2.5 text-sm">
                 <li className="flex items-center justify-between">
-                  <span className="text-[var(--color-text-muted)]">Monday – Friday</span>
+                  <span className="text-[var(--color-text-muted)]">
+                    Monday – Friday
+                  </span>
                   <span className="font-semibold text-[var(--color-navy)]">
                     9:00 AM – 7:00 PM
                   </span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-[var(--color-text-muted)]">Saturday</span>
+                  <span className="text-[var(--color-text-muted)]">
+                    Saturday
+                  </span>
                   <span className="font-semibold text-[var(--color-navy)]">
                     10:00 AM – 5:00 PM
                   </span>
@@ -431,11 +464,31 @@ const ContactPage = () => {
 
               <div className="relative mt-5 flex items-center gap-2">
                 {[
-                  { icon: <Facebook className="w-4 h-4" />, url: "#", label: "Facebook" },
-                  { icon: <Twitter className="w-4 h-4" />, url: "#", label: "Twitter" },
-                  { icon: <Instagram className="w-4 h-4" />, url: "#", label: "Instagram" },
-                  { icon: <Linkedin className="w-4 h-4" />, url: "#", label: "LinkedIn" },
-                  { icon: <Youtube className="w-4 h-4" />, url: "#", label: "YouTube" },
+                  {
+                    icon: <Facebook className="w-4 h-4" />,
+                    url: "#",
+                    label: "Facebook",
+                  },
+                  {
+                    icon: <Twitter className="w-4 h-4" />,
+                    url: "#",
+                    label: "Twitter",
+                  },
+                  {
+                    icon: <Instagram className="w-4 h-4" />,
+                    url: "#",
+                    label: "Instagram",
+                  },
+                  {
+                    icon: <Linkedin className="w-4 h-4" />,
+                    url: "#",
+                    label: "LinkedIn",
+                  },
+                  {
+                    icon: <Youtube className="w-4 h-4" />,
+                    url: "#",
+                    label: "YouTube",
+                  },
                 ].map((s, i) => (
                   <a
                     key={i}

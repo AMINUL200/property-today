@@ -43,7 +43,27 @@ const Navbar = ({ toggleMenu }) => {
         { id: "buy-commercial", label: "Commercial", path: "/buy/commercial" },
       ],
     },
-    { id: "sell", label: "Sell", path: "/sell" },
+    {
+      id: "sell",
+      label: "Sell",
+      dropdown: [
+        {
+          id: "sell-property",
+          label: "Sell Your Property",
+          path: "/sell",
+        },
+        {
+          id: "list-property",
+          label: "List Your Property",
+          path: "/list-property",
+        },
+        {
+          id: "rent-property",
+          label: "Rent / Lease Your Property",
+          path: "/list-property/rent",
+        },
+      ],
+    },
     {
       id: "rent",
       label: "Rent",
@@ -108,39 +128,54 @@ const Navbar = ({ toggleMenu }) => {
       label: "Services",
       dropdown: [
         {
-          id: "svc-verification",
-          label: "Property Verification",
-          path: "/services/verification",
+          id: "svc-buying",
+          label: "Property Buying Assistance",
+          path: "/services/property-buying",
         },
         {
-          id: "svc-buy-sell",
-          label: "Buy / Sell Services",
-          path: "/services/buy-sell",
+          id: "svc-selling",
+          label: "Property Selling",
+          path: "/services/property-selling",
         },
         {
           id: "svc-rental",
-          label: "Rental Services",
-          path: "/services/rental",
+          label: "Property Rental & Leasing",
+          path: "/services/property-rental",
         },
         {
-          id: "svc-loans",
-          label: "Home Loan Assistance",
-          path: "/services/home-loan",
+          id: "svc-land-plots",
+          label: "Land & Plot Deals",
+          path: "/services/land-plot-deals",
         },
         {
-          id: "svc-investment",
-          label: "Investment Advisory",
-          path: "/services/investment",
+          id: "svc-verification",
+          label: "Property Verification",
+          path: "/services/property-verification",
+        },
+        {
+          id: "svc-documentation",
+          label: "Documentation Assistance",
+          path: "/services/documentation",
+        },
+        {
+          id: "svc-valuation",
+          label: "Property Valuation",
+          path: "/services/valuation",
+        },
+        {
+          id: "svc-site-visit",
+          label: "Site Visit Assistance",
+          path: "/services/site-visit",
         },
         {
           id: "svc-management",
           label: "Property Management",
-          path: "/services/management",
+          path: "/services/property-management",
         },
         {
-          id: "svc-construction",
-          label: "Construction & Development",
-          path: "/services/construction",
+          id: "svc-investment",
+          label: "Investment Assistance",
+          path: "/services/investment",
         },
       ],
     },
@@ -261,9 +296,9 @@ const Navbar = ({ toggleMenu }) => {
           onClick={() => navigate("/")}
         >
           <img
-            src="/image/logo.jpeg"
+            src="/image/Navbar_logo.png"
             alt="Propertytoday"
-            className="h-12 w-auto object-contain"
+            className="h-16 w-auto object-contain"
           />
         </div>
         {/* ---------- Desktop Navigation ---------- */}
@@ -273,15 +308,6 @@ const Navbar = ({ toggleMenu }) => {
 
         {/* ---------- Right side: Search Property, Call Now, List Your Property, Login ---------- */}
         <div className="hidden xl:flex items-center gap-2 shrink-0">
-          {/* Search Property – outlined */}
-          <RouterLink
-            to="/search"
-            className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-[var(--radius-md)] text-[var(--color-navy)] border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors duration-200 whitespace-nowrap"
-          >
-            <Search className="w-4 h-4" />
-            <span>Search</span>
-          </RouterLink>
-
           {/* Call Now – phone icon button */}
           <a
             href="tel:+01234567890"
@@ -292,25 +318,13 @@ const Navbar = ({ toggleMenu }) => {
             <span>Call Now</span>
           </a>
 
-          {/* List Your Property – gold gradient */}
           <RouterLink
             to="/list-property"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-[var(--color-navy)] bg-[var(--gradient-gold)] shadow-[var(--shadow-gold)] hover:brightness-105 hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
           >
             <PlusCircle className="w-4 h-4" />
             <span>List Your Property</span>
           </RouterLink>
-
-          {/* Auth */}
-          {!isAuthenticated && (
-            <RouterLink
-              to="/login"
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
-            >
-              <User className="w-4 h-4" />
-              <span>Login</span>
-            </RouterLink>
-          )}
 
           {isAuthenticated && userData?.user_type === 4 && (
             <button
@@ -349,14 +363,7 @@ const Navbar = ({ toggleMenu }) => {
             <Phone className="w-4 h-4" />
           </a>
 
-          {/* Search quick icon */}
-          <RouterLink
-            to="/search"
-            aria-label="Search Property"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors duration-200"
-          >
-            <Search className="w-4 h-4" />
-          </RouterLink>
+        
 
           {/* Menu button */}
           <button
