@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
   ChevronDown,
-  Search,
-  User,
   LogOut,
   LayoutDashboard,
   Phone,
@@ -14,49 +12,44 @@ import {
 const Navbar = ({ toggleMenu }) => {
   const [scrolled, setScrolled] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState({});
+
   const dropdownRefs = useRef({});
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Scroll effect
+  /* =========================================================
+     SCROLL EFFECT
+     ========================================================= */
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // PropertyToday navigation links:
-  // Home | Buy | Sell | Rent | Land & Plots | New Projects | Services | Locations | About Us | Contact
+  /* =========================================================
+     NAVIGATION LINKS
+     ========================================================= */
   const navLinks = [
     { id: "home", label: "Home", path: "/" },
+
     {
       id: "buy",
       label: "Buy",
       dropdown: [
-        {
-          id: "buy-residential",
-          label: "Residential",
-          path: "/buy/residential",
-        },
+        { id: "buy-residential", label: "Residential", path: "/buy/residential" },
         { id: "buy-apartments", label: "Apartments", path: "/buy/apartments" },
         { id: "buy-villas", label: "Villas", path: "/buy/villas" },
         { id: "buy-plots", label: "Plots", path: "/buy/plots" },
         { id: "buy-commercial", label: "Commercial", path: "/buy/commercial" },
       ],
     },
+
     {
       id: "sell",
       label: "Sell",
       dropdown: [
-        {
-          id: "sell-property",
-          label: "Sell Your Property",
-          path: "/sell",
-        },
-        {
-          id: "list-property",
-          label: "List Your Property",
-          path: "/list-property",
-        },
+        { id: "sell-property", label: "Sell Your Property", path: "/sell" },
+        { id: "list-property", label: "List Your Property", path: "/list-property" },
         {
           id: "rent-property",
           label: "Rent / Lease Your Property",
@@ -64,32 +57,22 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
+
     {
       id: "rent",
       label: "Rent",
       dropdown: [
-        {
-          id: "rent-residential",
-          label: "Residential",
-          path: "/rent/residential",
-        },
-        {
-          id: "rent-commercial",
-          label: "Commercial",
-          path: "/rent/commercial",
-        },
+        { id: "rent-residential", label: "Residential", path: "/rent/residential" },
+        { id: "rent-commercial", label: "Commercial", path: "/rent/commercial" },
         { id: "rent-pg", label: "PG / Hostels", path: "/rent/pg" },
       ],
     },
+
     {
       id: "land",
       label: "Land & Plots",
       dropdown: [
-        {
-          id: "land-agricultural",
-          label: "Agricultural",
-          path: "/land/agricultural",
-        },
+        { id: "land-agricultural", label: "Agricultural", path: "/land/agricultural" },
         {
           id: "land-residential",
           label: "Residential Plots",
@@ -102,6 +85,7 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
+
     {
       id: "new-projects",
       label: "New Projects",
@@ -123,6 +107,7 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
+
     {
       id: "services",
       label: "Services",
@@ -179,61 +164,96 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
+
     { id: "locations", label: "Locations", path: "/locations" },
     { id: "about", label: "About Us", path: "/about" },
     { id: "contact", label: "Contact", path: "/contact" },
   ];
 
-  // Dummy auth state – swap with your real auth
+  /* =========================================================
+     AUTH
+     ========================================================= */
   const isAuthenticated = false;
   const userData = { user_type: 2 };
 
-  // ---------- Dropdown helpers ----------
+  /* =========================================================
+     CLOSE DROPDOWNS ON ROUTE CHANGE
+     ========================================================= */
+  useEffect(() => {
+    setOpenDropdowns({});
+  }, [location.pathname]);
+
+  /* =========================================================
+     TOGGLE DROPDOWN — single-open behaviour
+     ========================================================= */
   const toggleDropdown = (dropdownId) => {
     setOpenDropdowns((prev) => {
-      const newState = { ...prev };
-      Object.keys(newState).forEach((key) => {
-        if (key !== dropdownId) newState[key] = false;
-      });
-      newState[dropdownId] = !prev[dropdownId];
-      return newState;
+      // If this dropdown is already open → close everything
+      if (prev[dropdownId]) return {};
+      // Otherwise → open this one and close all others
+      return { [dropdownId]: true };
     });
   };
 
-  // Close dropdowns when clicking outside
+  const closeDropdown = () => setOpenDropdowns({});
+
+  /* =========================================================
+     CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
+     ========================================================= */
   useEffect(() => {
     const handleClickOutside = (event) => {
-      let clickedOutside = true;
-      Object.values(dropdownRefs.current).forEach((ref) => {
-        if (ref && ref.contains(event.target)) clickedOutside = false;
-      });
-      if (clickedOutside) setOpenDropdowns({});
+      const clickedInside = Object.values(dropdownRefs.current).some(
+        (ref) => ref && ref.contains(event.target)
+      );
+      if (!clickedInside) setOpenDropdowns({});
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  /* =========================================================
+     NORMAL NAVIGATION
+     ========================================================= */
   const handleNavClick = (path) => {
+    closeDropdown();
     navigate(path);
-    setOpenDropdowns({});
   };
 
+  /* =========================================================
+     LOGOUT
+     ========================================================= */
   const handleLogout = () => {
-    console.log("Logging out...");
+    closeDropdown();
     navigate("/");
   };
 
-  // ---------- Render one nav item ----------
-  const renderNavItem = (item) => {
-    const hasDropdown = item.dropdown && item.dropdown.length > 0;
-    const isOpen = openDropdowns[item.id];
+  /* =========================================================
+     RENDER NAV ITEM
+
+     `variant` ("desktop" | "tablet") keeps each nav's DOM refs
+     separate. Both navs render the same item ids, so sharing one
+     ref key made the hidden tablet nav overwrite the visible
+     desktop nav's ref for the first 6 items. The outside-click
+     check then thought clicks inside the open dropdown were
+     "outside", closed it on mousedown, and unmounted the link
+     before its click could fire. (Services isn't in the tablet
+     nav, which is why only it worked.)
+     ========================================================= */
+  const renderNavItem = (item, variant) => {
+    const hasDropdown =
+      Array.isArray(item.dropdown) && item.dropdown.length > 0;
+    const isOpen = Boolean(openDropdowns[item.id]);
 
     return (
       <div
         key={item.id}
         className="relative"
-        ref={(el) => (dropdownRefs.current[item.id] = el)}
+        ref={(el) => {
+          dropdownRefs.current[`${variant}-${item.id}`] = el;
+        }}
       >
+        {/* ---------- Parent button / link ---------- */}
         {hasDropdown ? (
           <button
             type="button"
@@ -252,24 +272,28 @@ const Navbar = ({ toggleMenu }) => {
             />
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={() => handleNavClick(item.path)}
-            className="px-3 py-2 text-sm font-semibold whitespace-nowrap text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-200"
+          <RouterLink
+            to={item.path}
+            onClick={closeDropdown}
+            className="block px-3 py-2 text-sm font-semibold whitespace-nowrap text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors duration-200"
           >
             {item.label}
-          </button>
+          </RouterLink>
         )}
 
+        {/* ---------- Dropdown panel ---------- */}
         {hasDropdown && isOpen && (
-          <div className="absolute top-full left-0 mt-1 w-60 bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-50 overflow-hidden">
+          <div
+            className="absolute top-full left-0 mt-1 w-72 bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-[999] overflow-hidden"
+            style={{ pointerEvents: "auto" }}
+          >
             <div className="py-2">
               {item.dropdown.map((subItem) => (
                 <RouterLink
                   key={subItem.id}
                   to={subItem.path}
-                  onClick={() => setOpenDropdowns({})}
-                  className="block px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors duration-150"
+                  onClick={closeDropdown}
+                  className="relative z-10 block w-full px-4 py-2.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors duration-150 cursor-pointer"
                 >
                   {subItem.label}
                 </RouterLink>
@@ -281,34 +305,38 @@ const Navbar = ({ toggleMenu }) => {
     );
   };
 
+  /* =========================================================
+     RENDER
+     ========================================================= */
   return (
     <header
-      className={`fixed w-full z-50 transition-all duration-300 border-b border-[var(--color-border-light)] ${
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b border-[var(--color-border-light)] ${
         scrolled
           ? "bg-white shadow-[var(--shadow-md)] py-0"
           : "bg-white/95 backdrop-blur-sm py-1"
       }`}
     >
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 flex justify-between items-center h-[70px]">
-        {/* ---------- Logo ---------- */}
-        <div
+        {/* ================= LOGO ================= */}
+        <RouterLink
+          to="/"
+          onClick={closeDropdown}
           className="flex items-center cursor-pointer select-none shrink-0"
-          onClick={() => navigate("/")}
         >
           <img
             src="/image/Navbar_logo.png"
             alt="Propertytoday"
             className="h-16 w-auto object-contain"
           />
-        </div>
-        {/* ---------- Desktop Navigation ---------- */}
+        </RouterLink>
+
+        {/* ================= DESKTOP NAV ================= */}
         <nav className="hidden xl:flex items-center gap-0.5">
-          {navLinks.map((item) => renderNavItem(item))}
+          {navLinks.map((item) => renderNavItem(item, "desktop"))}
         </nav>
 
-        {/* ---------- Right side: Search Property, Call Now, List Your Property, Login ---------- */}
+        {/* ================= RIGHT-SIDE ACTIONS ================= */}
         <div className="hidden xl:flex items-center gap-2 shrink-0">
-          {/* Call Now – phone icon button */}
           <a
             href="tel:+01234567890"
             aria-label="Call Now"
@@ -320,6 +348,7 @@ const Navbar = ({ toggleMenu }) => {
 
           <RouterLink
             to="/list-property"
+            onClick={closeDropdown}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
           >
             <PlusCircle className="w-4 h-4" />
@@ -328,6 +357,7 @@ const Navbar = ({ toggleMenu }) => {
 
           {isAuthenticated && userData?.user_type === 4 && (
             <button
+              type="button"
               onClick={handleLogout}
               className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-danger)] hover:bg-red-700 hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
             >
@@ -339,6 +369,7 @@ const Navbar = ({ toggleMenu }) => {
           {isAuthenticated && userData?.user_type !== 4 && (
             <RouterLink
               to="/dashboard"
+              onClick={closeDropdown}
               className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
             >
               <LayoutDashboard className="w-4 h-4" />
@@ -347,14 +378,13 @@ const Navbar = ({ toggleMenu }) => {
           )}
         </div>
 
-        {/* ---------- Tablet (lg): primary nav only, actions in sidebar ---------- */}
+        {/* ================= TABLET NAV ================= */}
         <nav className="hidden lg:flex xl:hidden items-center gap-0.5">
-          {navLinks.slice(0, 6).map((item) => renderNavItem(item))}
+          {navLinks.slice(0, 6).map((item) => renderNavItem(item, "tablet"))}
         </nav>
 
-        {/* ---------- Mobile + tablet: quick actions + menu ---------- */}
+        {/* ================= MOBILE ACTIONS ================= */}
         <div className="flex lg:hidden items-center gap-2">
-          {/* Call Now quick icon */}
           <a
             href="tel:+01234567890"
             aria-label="Call Now"
@@ -363,10 +393,8 @@ const Navbar = ({ toggleMenu }) => {
             <Phone className="w-4 h-4" />
           </a>
 
-        
-
-          {/* Menu button */}
           <button
+            type="button"
             onClick={toggleMenu}
             className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors duration-200"
             aria-label="Toggle menu"

@@ -19,7 +19,7 @@ import {
   Youtube,
   ArrowRight,
 } from "lucide-react";
-import PageLoader from "../../component/common/PageLoader";
+import PageLoader from "../../../component/common/PageLoader";
 
 const ContactPage = () => {
   const [form, setForm] = useState({
