@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowLeft } from "lucide-react";
 import CustomInput from "../../component/form/CustomInput";
-// import CustomInput from "../path/to/CustomInput"; // Update with your actual path
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -67,51 +66,52 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4 sm:px-6 lg:px-8">
-      {/* Background decoration */}
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-soft)] py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background decoration — brand glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#ffba00]/20 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300/20 rounded-full blur-3xl"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[var(--color-primary)]/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[var(--color-secondary)]/20 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-md w-full relative z-10">
         {/* Back button */}
         <button
           onClick={() => navigate("/")}
-          className="mb-6 flex items-center space-x-2 text-gray-600 hover:text-[#ffba00] transition-colors group"
+          className="mb-6 flex items-center space-x-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors group"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium">Back to Home</span>
         </button>
 
         {/* Login Card */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20">
+        <div className="bg-white rounded-[var(--radius-2xl)] shadow-[var(--shadow-xl)] p-8 border border-[var(--color-border-light)]">
           {/* Logo and Title */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
+              <div className="w-16 h-16 rounded-[var(--radius-lg)] bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)]">
                 <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 48 48"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="20"
-                    stroke="white"
-                    strokeWidth="3"
+                  <path
+                    d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V10.5Z"
+                    fill="white"
                   />
-                  <path d="M16 24L24 14L32 24L24 34L16 24Z" fill="white" />
                 </svg>
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+            <h2 className="text-3xl font-bold text-[var(--color-navy)] mb-2">
               Welcome Back
             </h2>
-            <p className="text-gray-600">Sign in to continue to MySite</p>
+            <p className="text-[var(--color-text-muted)]">
+              Sign in to continue to{" "}
+              <span className="font-bold text-[var(--color-navy)]">
+                Property<span className="text-[var(--color-primary)]">today</span>
+              </span>
+            </p>
           </div>
 
           {/* Login Form */}
@@ -128,13 +128,13 @@ const LoginPage = () => {
                 placeholder=""
                 className={
                   errors.email
-                    ? "border-red-500 focus:ring-red-200/50 focus:border-red-400"
+                    ? "border-[var(--color-danger)] focus:ring-[var(--color-danger)]/20 focus:border-[var(--color-danger)]"
                     : ""
                 }
               />
               {errors.email && (
-                <p className="mt-2 text-sm text-red-600 flex items-center">
-                  <span className="inline-block w-1 h-1 bg-red-600 rounded-full mr-2"></span>
+                <p className="mt-2 text-sm text-[var(--color-danger)] flex items-center">
+                  <span className="inline-block w-1 h-1 bg-[var(--color-danger)] rounded-full mr-2" />
                   {errors.email}
                 </p>
               )}
@@ -152,13 +152,13 @@ const LoginPage = () => {
                 placeholder=""
                 className={
                   errors.password
-                    ? "border-red-500 focus:ring-red-200/50 focus:border-red-400"
+                    ? "border-[var(--color-danger)] focus:ring-[var(--color-danger)]/20 focus:border-[var(--color-danger)]"
                     : ""
                 }
               />
               {errors.password && (
-                <p className="mt-2 text-sm text-red-600 flex items-center">
-                  <span className="inline-block w-1 h-1 bg-red-600 rounded-full mr-2"></span>
+                <p className="mt-2 text-sm text-[var(--color-danger)] flex items-center">
+                  <span className="inline-block w-1 h-1 bg-[var(--color-danger)] rounded-full mr-2" />
                   {errors.password}
                 </p>
               )}
@@ -171,23 +171,23 @@ const LoginPage = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-[#ffba00] focus:ring-[#ffba00] border-gray-300 rounded cursor-pointer"
+                  className="h-4 w-4 text-[var(--color-primary)] focus:ring-[var(--color-primary)] border-[var(--color-border)] rounded cursor-pointer accent-[var(--color-primary)]"
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-700 cursor-pointer"
+                  className="ml-2 block text-sm text-[var(--color-text-secondary)] cursor-pointer"
                 >
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <a
-                  href="/forgot-password"
-                  className="font-semibold text-indigo-600 hover:text-[#ffba00] transition-colors"
+                <Link
+                  to="/forgot-password"
+                  className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -195,11 +195,11 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-lg shadow-lg text-white bg-gradient-to-r from-[#ffba00] to-[#ff9500] hover:from-black hover:to-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ffba00] transition-all duration-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] transition-all duration-200 font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
               {isLoading ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/40 border-t-white" />
                   <span>Signing in...</span>
                 </>
               ) : (
@@ -215,10 +215,10 @@ const LoginPage = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-[var(--color-border)]" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+                <span className="px-2 bg-white text-[var(--color-text-muted)]">
                   Or continue with
                 </span>
               </div>
@@ -227,14 +227,14 @@ const LoginPage = () => {
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[var(--color-text-secondary)]">
               Don't have an account?{" "}
-              <a
-                href="/register"
-                className="font-semibold text-indigo-600 hover:text-[#ffba00] transition-colors"
+              <Link
+                to="/register"
+                className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
               >
                 Sign up now
-              </a>
+              </Link>
             </p>
           </div>
         </div>

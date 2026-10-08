@@ -12,10 +12,12 @@ import {
   Search,
   PlusCircle,
   Calendar,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 
 const Footer = () => {
-  // ---------- Link sections (per your spec) ----------
+  // ---------- Link sections ----------
   const quickLinks = [
     { name: "Home", url: "/" },
     { name: "Buy", url: "/buy" },
@@ -67,19 +69,49 @@ const Footer = () => {
     },
   ];
 
+  // ---------- Auth links (Login + Register) ----------
+  const authLinks = [
+    {
+      label: "Login",
+      url: "/login",
+      icon: LogIn,
+    },
+    {
+      label: "Register",
+      url: "/register",
+      icon: UserPlus,
+    },
+  ];
+
   return (
     <footer className="bg-[var(--color-navy)] text-white">
       {/* =========================================================
-          Main Buttons strip
+          Main Buttons strip (includes Login + Register)
           ========================================================= */}
       <div className="border-b border-white/10">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 flex-wrap">
+            {/* Primary action buttons */}
             {mainButtons.map(({ label, url, icon: Icon, style }) => (
               <Link
                 key={label}
                 to={url}
                 className={`inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-bold rounded-[var(--radius-md)] hover:-translate-y-0.5 transition-all duration-200 ${style}`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="uppercase tracking-wide">{label}</span>
+              </Link>
+            ))}
+
+            {/* Visual separator between action buttons and auth buttons */}
+            <span className="hidden sm:block w-px h-8 bg-white/15" />
+
+            {/* Auth buttons */}
+            {authLinks.map(({ label, url, icon: Icon }) => (
+              <Link
+                key={label}
+                to={url}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-bold rounded-[var(--radius-md)] text-white bg-white/5 border border-white/20 hover:bg-[var(--color-secondary)] hover:text-[var(--color-navy)] hover:border-[var(--color-secondary)] hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Icon className="w-4 h-4" />
                 <span className="uppercase tracking-wide">{label}</span>
@@ -104,7 +136,6 @@ const Footer = () => {
                 className="w-[220px] h-auto object-contain object-left"
               />
             </div>
-            
 
             {/* Get In Touch */}
             <div>
@@ -241,7 +272,7 @@ const Footer = () => {
       </div>
 
       {/* =========================================================
-          Bottom Bar
+          Bottom Bar (includes Login + Register quick links)
           ========================================================= */}
       <div className="border-t border-white/10">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5">
@@ -276,6 +307,20 @@ const Footer = () => {
                 className="hover:text-[var(--color-secondary)] transition-colors"
               >
                 FAQs
+              </Link>
+
+              {/* Auth links in bottom bar */}
+              <Link
+                to="/login"
+                className="text-[var(--color-secondary)] font-semibold hover:text-white transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="text-[var(--color-secondary)] font-semibold hover:text-white transition-colors"
+              >
+                Register
               </Link>
             </div>
           </div>
