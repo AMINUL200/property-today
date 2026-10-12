@@ -7,14 +7,14 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[var(--color-background-soft)] flex">
       {/* Sidebar */}
       <AdminSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <AdminNavbar setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 p-6 overflow-auto min-h-screen lg:pl-74 ">
+        <main className="flex-1 p-4 sm:p-6 overflow-auto min-h-screen lg:pl-72">
           <Outlet />
         </main>
       </div>

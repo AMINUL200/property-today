@@ -4,25 +4,23 @@ import {
   LayoutDashboard,
   Users,
   Settings,
-  Package,
+  Building2,
   BarChart,
-  ShoppingCart,
   FileText,
   ChevronDown,
-  ChevronRight,
-  Bell,
   Shield,
-  Database,
   Palette,
   Globe,
-  Mail,
+  Bell,
   UserCog,
   Tag,
   TrendingUp,
-  DollarSign,
-  Clock,
-  Star,
+  Home,
+  Briefcase,
+  MessageSquare,
   User2,
+  HandCoins,
+  MapPin,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -31,6 +29,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const [openDropdowns, setOpenDropdowns] = useState({});
 
+  // ---------- Admin menu — adapted for Propertytoday ----------
   const menuItems = [
     {
       id: "dashboard",
@@ -45,8 +44,45 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       path: "/admin/profile",
     },
     {
+      id: "properties",
+      label: "Properties",
+      icon: <Building2 className="w-5 h-5" />,
+      children: [
+        {
+          id: "all-properties",
+          label: "All Properties",
+          icon: <Building2 className="w-4 h-4" />,
+          path: "/admin/properties/all",
+        },
+        {
+          id: "for-sale",
+          label: "For Sale",
+          icon: <Home className="w-4 h-4" />,
+          path: "/admin/properties/sale",
+        },
+        {
+          id: "for-rent",
+          label: "For Rent",
+          icon: <HandCoins className="w-4 h-4" />,
+          path: "/admin/properties/rent",
+        },
+        {
+          id: "land-plots",
+          label: "Land & Plots",
+          icon: <MapPin className="w-4 h-4" />,
+          path: "/admin/properties/land",
+        },
+        {
+          id: "property-types",
+          label: "Property Types",
+          icon: <Tag className="w-4 h-4" />,
+          path: "/admin/properties/types",
+        },
+      ],
+    },
+    {
       id: "users",
-      label: "Users Management",
+      label: "Users",
       icon: <Users className="w-5 h-5" />,
       children: [
         {
@@ -54,6 +90,12 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           label: "All Users",
           icon: <Users className="w-4 h-4" />,
           path: "/admin/users/all",
+        },
+        {
+          id: "agents",
+          label: "Agents",
+          icon: <Briefcase className="w-4 h-4" />,
+          path: "/admin/users/agents",
         },
         {
           id: "user-roles",
@@ -70,35 +112,10 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       ],
     },
     {
-      id: "products",
-      label: "Products",
-      icon: <Package className="w-5 h-5" />,
-      children: [
-        {
-          id: "all-products",
-          label: "All Products",
-          icon: <Package className="w-4 h-4" />,
-          path: "/admin/products/all",
-        },
-        {
-          id: "categories",
-          label: "Categories",
-          icon: <Tag className="w-4 h-4" />,
-          path: "/admin/products/categories",
-        },
-        {
-          id: "inventory",
-          label: "Inventory",
-          icon: <Database className="w-4 h-4" />,
-          path: "/admin/products/inventory",
-        },
-      ],
-    },
-    {
-      id: "orders",
-      label: "Orders",
-      icon: <ShoppingCart className="w-5 h-5" />,
-      path: "/admin/orders",
+      id: "enquiries",
+      label: "Enquiries",
+      icon: <MessageSquare className="w-5 h-5" />,
+      path: "/admin/enquiries",
     },
     {
       id: "analytics",
@@ -112,10 +129,10 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           path: "/admin/analytics/overview",
         },
         {
-          id: "sales",
-          label: "Sales Analytics",
-          icon: <DollarSign className="w-4 h-4" />,
-          path: "/admin/analytics/sales",
+          id: "listings",
+          label: "Listings Analytics",
+          icon: <Building2 className="w-4 h-4" />,
+          path: "/admin/analytics/listings",
         },
         {
           id: "user-behavior",
@@ -137,8 +154,8 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       icon: <Settings className="w-5 h-5" />,
       children: [
         {
-          id: "SiteSettings",
-          label: "Site Setting",
+          id: "site-settings",
+          label: "Site Settings",
           icon: <Settings className="w-4 h-4" />,
           path: "/admin/site-settings",
         },
@@ -165,17 +182,13 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
   ];
 
   const toggleDropdown = (id) => {
-    setOpenDropdowns((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setOpenDropdowns((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const isActive = (path) => location.pathname === path;
 
-  const isParentActive = (children) => {
-    return children?.some((child) => location.pathname === child.path);
-  };
+  const isParentActive = (children) =>
+    children?.some((child) => location.pathname === child.path);
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -187,32 +200,48 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-[var(--color-navy-dark)]/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 
-  bg-gradient-to-b from-slate-900 to-slate-800 
-  shadow-2xl transform transition-transform duration-300 ease-in-out
-  ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[var(--color-navy)] shadow-[var(--shadow-xl)] transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
         {/* Header */}
-        <div className=" sticky flex top-0 z-50 bg-slate-900 items-center justify-between p-6 border-b border-slate-700/50">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-              <LayoutDashboard className="w-5 h-5 text-white" />
+        <div className="sticky top-0 z-50 bg-[var(--color-navy)] flex items-center justify-between p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)]">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V10.5Z"
+                  fill="white"
+                />
+              </svg>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Admin Panel</h2>
-              <p className="text-xs text-slate-400">Management Console</p>
+            <div className="leading-none">
+              <h2 className="text-base font-extrabold tracking-tight text-white">
+                Property<span className="text-[var(--color-secondary)]">today</span>
+              </h2>
+              <p className="text-[10px] font-medium text-white/60 tracking-widest uppercase">
+                Admin Console
+              </p>
             </div>
           </div>
+
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors lg:hidden text-slate-300 hover:text-white"
+            className="p-2 rounded-[var(--radius-md)] hover:bg-white/10 transition-colors lg:hidden text-white/70 hover:text-white"
+            aria-label="Close sidebar"
           >
             <X className="w-5 h-5" />
           </button>
@@ -226,23 +255,23 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
               {item.children ? (
                 <button
                   onClick={() => toggleDropdown(item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-[var(--radius-md)] transition-all duration-200 group ${
                     isParentActive(item.children)
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                      ? "bg-[var(--color-primary)] text-white shadow-[var(--shadow-primary)]"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-3">
                     <div
-                      className={`${
+                      className={`transition-colors ${
                         isParentActive(item.children)
                           ? "text-white"
-                          : "text-slate-400 group-hover:text-white"
-                      } transition-colors`}
+                          : "text-white/50 group-hover:text-white"
+                      }`}
                     >
                       {item.icon}
                     </div>
-                    <span className="font-medium text-sm">{item.label}</span>
+                    <span className="font-semibold text-sm">{item.label}</span>
                   </div>
                   <div
                     className={`transition-transform duration-200 ${
@@ -255,22 +284,22 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
               ) : (
                 <button
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] transition-all duration-200 group ${
                     isActive(item.path)
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                      ? "bg-[var(--color-primary)] text-white shadow-[var(--shadow-primary)]"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
                   }`}
                 >
                   <div
-                    className={`${
+                    className={`transition-colors ${
                       isActive(item.path)
                         ? "text-white"
-                        : "text-slate-400 group-hover:text-white"
-                    } transition-colors`}
+                        : "text-white/50 group-hover:text-white"
+                    }`}
                   >
                     {item.icon}
                   </div>
-                  <span className="font-medium text-sm">{item.label}</span>
+                  <span className="font-semibold text-sm">{item.label}</span>
                 </button>
               )}
 
@@ -283,23 +312,23 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
                       : "max-h-0 opacity-0"
                   }`}
                 >
-                  <div className="ml-4 pl-4 border-l-2 border-slate-700/50 space-y-1 py-1">
+                  <div className="ml-4 pl-4 border-l-2 border-white/10 space-y-1 py-1">
                     {item.children.map((child) => (
                       <button
                         key={child.id}
                         onClick={() => handleNavigation(child.path)}
-                        className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 group ${
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-[var(--radius-md)] transition-all duration-200 group ${
                           isActive(child.path)
-                            ? "bg-blue-500/20 text-blue-400 border-l-2 border-blue-400"
-                            : "text-slate-400 hover:bg-slate-700/30 hover:text-slate-200"
+                            ? "bg-[var(--color-secondary)]/15 text-[var(--color-secondary)] border-l-2 border-[var(--color-secondary)]"
+                            : "text-white/60 hover:bg-white/5 hover:text-white"
                         }`}
                       >
                         <div
-                          className={`${
+                          className={`transition-colors ${
                             isActive(child.path)
-                              ? "text-blue-400"
-                              : "text-slate-500 group-hover:text-slate-300"
-                          } transition-colors`}
+                              ? "text-[var(--color-secondary)]"
+                              : "text-white/40 group-hover:text-white"
+                          }`}
                         >
                           {child.icon}
                         </div>

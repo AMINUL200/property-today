@@ -19,34 +19,34 @@ const AdminNavbar = ({ setSidebarOpen }) => {
   const notificationRef = useRef(null);
   const navigate = useNavigate();
 
-  // Dummy user data - replace with your actual user data
+  // Dummy user data — swap with real auth
   const userData = {
     name: "Admin User",
-    email: "admin@example.com",
+    email: "admin@propertytoday.com",
     role: "Administrator",
-    avatar: null, // Set to image URL if available
+    avatar: null,
   };
 
-  // Dummy notifications - replace with your actual notifications
+  // Dummy notifications — swap with real data
   const notifications = [
     {
       id: 1,
-      title: "New user registered",
-      message: "John Doe just signed up",
+      title: "New property listed",
+      message: "A new property was listed in New Town, Kolkata",
       time: "5 min ago",
       unread: true,
     },
     {
       id: 2,
-      title: "Payment received",
-      message: "Payment of $299 received",
+      title: "New agent registered",
+      message: "Rahul Sharma registered as an agent",
       time: "1 hour ago",
       unread: true,
     },
     {
       id: 3,
-      title: "System update",
-      message: "System updated successfully",
+      title: "Site update",
+      message: "Propertytoday system updated successfully",
       time: "2 hours ago",
       unread: false,
     },
@@ -60,7 +60,10 @@ const AdminNavbar = ({ setSidebarOpen }) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfileMenu(false);
       }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
         setShowNotifications(false);
       }
     };
@@ -71,8 +74,7 @@ const AdminNavbar = ({ setSidebarOpen }) => {
 
   const handleLogout = () => {
     console.log("Logging out...");
-    // Add your logout logic here
-    navigate("/signin");
+    navigate("/login");
   };
 
   const handleProfileClick = () => {
@@ -82,44 +84,46 @@ const AdminNavbar = ({ setSidebarOpen }) => {
 
   const handleSettingsClick = () => {
     setShowProfileMenu(false);
-    navigate("/admin/settings");
+    navigate("/admin/site-settings");
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
+    <header className="bg-white shadow-[var(--shadow-sm)] border-b border-[var(--color-border-light)] sticky top-0 z-30">
+      <div className="px-4 sm:px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
           {/* Left side */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4 min-w-0">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
+              className="p-2 rounded-[var(--radius-md)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors lg:hidden"
+              aria-label="Open sidebar"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Search Bar */}
             <div className="relative hidden md:block">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-light)]" />
               <input
                 type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ffba00] focus:border-transparent transition-all"
+                placeholder="Search properties, users, agents..."
+                className="pl-10 pr-4 py-2.5 w-72 border border-[var(--color-border)] bg-[var(--color-background-soft)] rounded-[var(--radius-md)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] focus:bg-white transition-all"
               />
             </div>
           </div>
 
           {/* Right side */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                className="p-2 rounded-[var(--radius-md)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors relative"
+                aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  <span className="absolute top-1 right-1 w-5 h-5 bg-[var(--color-primary)] rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-[var(--shadow-primary)]">
                     {unreadCount}
                   </span>
                 )}
@@ -127,31 +131,40 @@ const AdminNavbar = ({ setSidebarOpen }) => {
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden animate-fadeIn">
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-3">
-                    <h3 className="text-white font-semibold">Notifications</h3>
-                    <p className="text-white/80 text-xs">{unreadCount} unread messages</p>
+                <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-[var(--radius-lg)] shadow-[var(--shadow-xl)] border border-[var(--color-border-light)] overflow-hidden z-50 animate-fadeIn">
+                  {/* Header */}
+                  <div className="bg-[var(--gradient-navy)] px-4 py-3">
+                    <h3 className="text-white font-bold text-sm">
+                      Notifications
+                    </h3>
+                    <p className="text-white/70 text-xs mt-0.5">
+                      {unreadCount} unread messages
+                    </p>
                   </div>
-                  <div className="max-h-96 overflow-y-auto">
+
+                  {/* List */}
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar">
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
-                          notification.unread ? "bg-blue-50/50" : ""
+                        className={`px-4 py-3 border-b border-[var(--color-border-light)] last:border-0 hover:bg-[var(--color-background-soft)] cursor-pointer transition-colors ${
+                          notification.unread
+                            ? "bg-[var(--color-primary-light)]/30"
+                            : ""
                         }`}
                       >
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-start gap-3">
                           {notification.unread && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full mt-2 shrink-0" />
                           )}
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-[var(--color-navy)]">
                               {notification.title}
                             </p>
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className="text-xs text-[var(--color-text-muted)] mt-1 line-clamp-2">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-[var(--color-text-light)] mt-1">
                               {notification.time}
                             </p>
                           </div>
@@ -159,8 +172,10 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                       </div>
                     ))}
                   </div>
-                  <div className="px-4 py-3 bg-gray-50 text-center">
-                    <button className="text-sm text-indigo-600 hover:text-[#ffba00] font-semibold transition-colors">
+
+                  {/* Footer */}
+                  <div className="px-4 py-3 bg-[var(--color-background-soft)] text-center border-t border-[var(--color-border-light)]">
+                    <button className="text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] font-bold transition-colors">
                       View all notifications
                     </button>
                   </div>
@@ -172,27 +187,29 @@ const AdminNavbar = ({ setSidebarOpen }) => {
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-3 p-1.5 pr-3 rounded-[var(--radius-md)] hover:bg-[var(--color-background-soft)] transition-colors"
               >
-                <div className="w-9 h-9 bg-gradient-to-br from-[#ffba00] to-[#ff9500] rounded-full flex items-center justify-center shadow-md">
+                <div className="w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)] overflow-hidden">
                   {userData.avatar ? (
                     <img
                       src={userData.avatar}
                       alt="Profile"
-                      className="w-full h-full rounded-full object-cover"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <User className="w-5 h-5 text-white" />
+                    <User className="w-4 h-4 text-white" />
                   )}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-bold text-[var(--color-navy)] leading-tight">
                     {userData.name}
                   </p>
-                  <p className="text-xs text-gray-500">{userData.role}</p>
+                  <p className="text-[11px] text-[var(--color-text-muted)] leading-tight">
+                    {userData.role}
+                  </p>
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 text-gray-500 transition-transform hidden sm:block ${
+                  className={`w-4 h-4 text-[var(--color-text-muted)] transition-transform hidden sm:block ${
                     showProfileMenu ? "rotate-180" : ""
                   }`}
                 />
@@ -200,26 +217,28 @@ const AdminNavbar = ({ setSidebarOpen }) => {
 
               {/* Profile Dropdown Menu */}
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden animate-fadeIn">
+                <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white rounded-[var(--radius-lg)] shadow-[var(--shadow-xl)] border border-[var(--color-border-light)] overflow-hidden z-50 animate-fadeIn">
                   {/* User Info Header */}
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                  <div className="bg-navy px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center overflow-hidden shrink-0">
                         {userData.avatar ? (
                           <img
                             src={userData.avatar}
                             alt="Profile"
-                            className="w-full h-full rounded-full object-cover"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <User className="w-6 h-6 text-white" />
                         )}
                       </div>
-                      <div className="flex-1">
-                        <p className="text-white font-semibold text-sm">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-bold text-sm truncate">
                           {userData.name}
                         </p>
-                        <p className="text-white/80 text-xs">{userData.email}</p>
+                        <p className="text-white/70 text-xs truncate">
+                          {userData.email}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -228,16 +247,16 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                   <div className="py-2">
                     <button
                       onClick={handleProfileClick}
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors text-left"
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-background-soft)] transition-colors text-left"
                     >
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <UserCircle className="w-4 h-4 text-blue-600" />
+                      <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-primary-light)] flex items-center justify-center shrink-0">
+                        <UserCircle className="w-4 h-4 text-[var(--color-primary)]" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-navy)]">
                           My Profile
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-[var(--color-text-muted)]">
                           View and edit profile
                         </p>
                       </div>
@@ -245,52 +264,52 @@ const AdminNavbar = ({ setSidebarOpen }) => {
 
                     <button
                       onClick={handleSettingsClick}
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors text-left"
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-background-soft)] transition-colors text-left"
                     >
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <Settings className="w-4 h-4 text-purple-600" />
+                      <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-secondary-light)] flex items-center justify-center shrink-0">
+                        <Settings className="w-4 h-4 text-[var(--color-secondary-dark)]" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-navy)]">
                           Settings
                         </p>
-                        <p className="text-xs text-gray-500">
-                          Manage preferences
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          Manage site preferences
                         </p>
                       </div>
                     </button>
 
                     <button
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors text-left"
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-background-soft)] transition-colors text-left"
                     >
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Mail className="w-4 h-4 text-green-600" />
+                      <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-success-light)] flex items-center justify-center shrink-0">
+                        <Mail className="w-4 h-4 text-[var(--color-success)]" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-navy)]">
                           Messages
                         </p>
-                        <p className="text-xs text-gray-500">
-                          View your messages
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          View enquiries and messages
                         </p>
                       </div>
                     </button>
                   </div>
 
                   {/* Logout Button */}
-                  <div className="border-t border-gray-200 p-2">
+                  <div className="border-t border-[var(--color-border-light)] p-2">
                     <button
                       onClick={handleLogout}
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-red-50 transition-colors rounded-lg text-left group"
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-danger-light)] transition-colors rounded-[var(--radius-md)] text-left group"
                     >
-                      <div className="w-8 h-8 bg-red-100 group-hover:bg-red-200 rounded-lg flex items-center justify-center transition-colors">
-                        <LogOut className="w-4 h-4 text-red-600" />
+                      <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-danger-light)] group-hover:bg-[var(--color-danger)]/20 flex items-center justify-center transition-colors shrink-0">
+                        <LogOut className="w-4 h-4 text-[var(--color-danger)]" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-red-600">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-[var(--color-danger)]">
                           Logout
                         </p>
-                        <p className="text-xs text-red-400">
+                        <p className="text-xs text-[var(--color-danger)]/70">
                           Sign out of your account
                         </p>
                       </div>
@@ -303,19 +322,14 @@ const AdminNavbar = ({ setSidebarOpen }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      {/* Inline animation for dropdown entry */}
+      <style>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
+          animation: fadeIn 0.18s ease-out;
         }
       `}</style>
     </header>

@@ -18,6 +18,9 @@ import ListPropertyPage from "./pages/public/property/ListPropertyPage";
 import ListPropertyRentPage from "./pages/public/property/ListPropertyRentPage";
 import LandPage from "./pages/public/property/LandPage";
 import LocationsPage from "./pages/listing/LocationsPage";
+import AgentLayout from "./layout/AgentLayout";
+import AgentDashboard from "./pages/agent/AgentDashboard";
+import AgentProfile from "./pages/agent/AgentProfile";
 
 const App = () => {
   return (
@@ -46,6 +49,12 @@ const App = () => {
 
           <Route path="locations" element={<LocationsPage />} />
           <Route path="locations/:cityId" element={<LocationsPage />} />
+        </Route>
+
+        <Route path="/agent" element={<AgentLayout />}>
+          <Route index element={<AgentDashboard />} />
+          <Route path="profile" element={<AgentProfile />} />
+          {/* Add more agent routes here as you build them */}
         </Route>
 
         {/* Admin Layout */}
