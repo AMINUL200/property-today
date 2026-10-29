@@ -11,6 +11,7 @@ import {
   Mail,
   ChevronDown,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const AdminNavbar = ({ setSidebarOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -19,15 +20,27 @@ const AdminNavbar = ({ setSidebarOpen }) => {
   const notificationRef = useRef(null);
   const navigate = useNavigate();
 
-  // Dummy user data — swap with real auth
+  // ---------- Auth from AuthContext ----------
+  const { user, logout } = useAuth();
+
+  // ---------- User data derived from auth ----------
   const userData = {
-    name: "Admin User",
-    email: "admin@propertytoday.com",
-    role: "Administrator",
+    name: user?.name || "Admin User",
+    email: user?.email || "admin@propertytoday.com",
+    role: user?.role
+      ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+      : "Administrator",
+    phone: user?.phone || "",
     avatar: null,
+    initials: (user?.name || "A")
+      .split(" ")
+      .map((w) => w.charAt(0))
+      .slice(0, 2)
+      .join("")
+      .toUpperCase(),
   };
 
-  // Dummy notifications — swap with real data
+  // ---------- Dummy notifications ----------
   const notifications = [
     {
       id: 1,
@@ -54,7 +67,7 @@ const AdminNavbar = ({ setSidebarOpen }) => {
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  // Close dropdowns when clicking outside
+  // ---------- Close dropdowns on outside click ----------
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -72,9 +85,11 @@ const AdminNavbar = ({ setSidebarOpen }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ---------- Logout ----------
   const handleLogout = () => {
-    console.log("Logging out...");
-    navigate("/login");
+    setShowProfileMenu(false);
+    logout(); // clears token + user from localStorage and AuthContext
+    navigate("/login", { replace: true });
   };
 
   const handleProfileClick = () => {
@@ -129,10 +144,8 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                 )}
               </button>
 
-              {/* Notifications Dropdown */}
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-[var(--radius-lg)] shadow-[var(--shadow-xl)] border border-[var(--color-border-light)] overflow-hidden z-50 animate-fadeIn">
-                  {/* Header */}
                   <div className="bg-[var(--gradient-navy)] px-4 py-3">
                     <h3 className="text-white font-bold text-sm">
                       Notifications
@@ -142,7 +155,6 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                     </p>
                   </div>
 
-                  {/* List */}
                   <div className="max-h-96 overflow-y-auto custom-scrollbar">
                     {notifications.map((notification) => (
                       <div
@@ -173,7 +185,6 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                     ))}
                   </div>
 
-                  {/* Footer */}
                   <div className="px-4 py-3 bg-[var(--color-background-soft)] text-center border-t border-[var(--color-border-light)]">
                     <button className="text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] font-bold transition-colors">
                       View all notifications
@@ -197,7 +208,9 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <User className="w-4 h-4 text-white" />
+                    <span className="text-white text-xs font-bold">
+                      {userData.initials}
+                    </span>
                   )}
                 </div>
                 <div className="hidden sm:block text-left">
@@ -215,11 +228,9 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                 />
               </button>
 
-              {/* Profile Dropdown Menu */}
               {showProfileMenu && (
                 <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white rounded-[var(--radius-lg)] shadow-[var(--shadow-xl)] border border-[var(--color-border-light)] overflow-hidden z-50 animate-fadeIn">
-                  {/* User Info Header */}
-                  <div className="bg-navy px-4 py-4">
+                  <div className="bg-navy-gradient px-4 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center overflow-hidden shrink-0">
                         {userData.avatar ? (
@@ -229,7 +240,9 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <User className="w-6 h-6 text-white" />
+                          <span className="text-white text-sm font-bold">
+                            {userData.initials}
+                          </span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -243,7 +256,6 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                     </div>
                   </div>
 
-                  {/* Menu Items */}
                   <div className="py-2">
                     <button
                       onClick={handleProfileClick}
@@ -280,6 +292,10 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                     </button>
 
                     <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        navigate("/admin/enquiries");
+                      }}
                       className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-background-soft)] transition-colors text-left"
                     >
                       <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-success-light)] flex items-center justify-center shrink-0">
@@ -296,7 +312,6 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                     </button>
                   </div>
 
-                  {/* Logout Button */}
                   <div className="border-t border-[var(--color-border-light)] p-2">
                     <button
                       onClick={handleLogout}
@@ -322,7 +337,6 @@ const AdminNavbar = ({ setSidebarOpen }) => {
         </div>
       </div>
 
-      {/* Inline animation for dropdown entry */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-8px); }

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Mail, Lock, LogIn, ArrowLeft } from "lucide-react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Mail, Lock, LogIn, ArrowLeft, AlertCircle } from "lucide-react";
 import CustomInput from "../../component/form/CustomInput";
+import { api } from "../../service/api";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -9,30 +11,41 @@ const LoginPage = () => {
     password: "",
   });
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [rememberMe, setRememberMe] = useState(true);
 
-  // Handle input change
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
+  // Where to redirect after successful login
+  // - If user was redirected from a protected page, go back there
+  // - Otherwise go to their role-specific dashboard
+  const from = location.state?.from?.pathname || null;
+
+  /* =========================================================
+     INPUT CHANGE
+     ========================================================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error when user starts typing
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear field error while typing
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+    // Clear API error once user edits anything
+    if (apiError) setApiError("");
   };
 
-  // Validate form
+  /* =========================================================
+     VALIDATION
+     ========================================================= */
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.email) {
+    if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email is invalid";
@@ -48,26 +61,95 @@ const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (validateForm()) {
-      setIsLoading(true);
-
-      // Simulate API call
-      setTimeout(() => {
-        console.log("Login data:", formData);
-        // Add your login API call here
-        setIsLoading(false);
-        // navigate("/dashboard");
-      }, 1500);
+  /* =========================================================
+     ROLE-BASED REDIRECT
+     ========================================================= */
+  const getRedirectPath = (role) => {
+    switch ((role || "").toLowerCase()) {
+      case "admin":
+        return "/admin";
+      case "agent":
+        return "/agent";
+      default:
+        return "/";
     }
   };
 
+  /* =========================================================
+     SUBMIT
+     ========================================================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setApiError("");
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+
+    try {
+      const response = await api.post("/login", {
+        email: formData.email.trim(),
+        password: formData.password,
+      });
+
+      // Backend returns:
+      // {
+      //   success: true,
+      //   message: "Login successful.",
+      //   data: { user, token, token_type }
+      // }
+      const payload = response?.data;
+
+      if (!payload?.success || !payload?.data?.token) {
+        throw {
+          message:
+            payload?.message ||
+            "Login failed. Please check your credentials and try again.",
+        };
+      }
+
+      // Persist token + user via AuthContext
+      login(payload);
+
+      // Optional: if user unchecked "Remember me",
+      // clear token on browser close by using sessionStorage
+      if (!rememberMe) {
+        sessionStorage.setItem("pt_no_persist", "1");
+      } else {
+        sessionStorage.removeItem("pt_no_persist");
+      }
+
+      // Redirect based on role, or back to the page they came from
+      const role = payload.data.user?.role;
+      const redirectTo = from || getRedirectPath(role);
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      // `api` interceptor rejects with { status, data, message }
+      let message =
+        err?.message ||
+        err?.data?.message ||
+        "Unable to sign in. Please try again.";
+
+      // Laravel validation errors come as { errors: { email: [...] } }
+      if (err?.data?.errors) {
+        const firstKey = Object.keys(err.data.errors)[0];
+        if (firstKey && Array.isArray(err.data.errors[firstKey])) {
+          message = err.data.errors[firstKey][0];
+        }
+      }
+
+      setApiError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /* =========================================================
+     UI
+     ========================================================= */
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-soft)] py-12 px-4 sm:px-6 lg:px-8">
-      {/* Background decoration — brand glows */}
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-soft)] py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Brand glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-[var(--color-primary)]/15 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[var(--color-secondary)]/20 rounded-full blur-3xl" />
@@ -76,6 +158,7 @@ const LoginPage = () => {
       <div className="max-w-md w-full relative z-10">
         {/* Back button */}
         <button
+          type="button"
           onClick={() => navigate("/")}
           className="mb-6 flex items-center space-x-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors group"
         >
@@ -85,23 +168,10 @@ const LoginPage = () => {
 
         {/* Login Card */}
         <div className="bg-white rounded-[var(--radius-2xl)] shadow-[var(--shadow-xl)] p-8 border border-[var(--color-border-light)]">
-          {/* Logo and Title */}
+          {/* Logo + Title */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-[var(--radius-lg)] bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)]">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H15V15H9V21H4C3.44772 21 3 20.5523 3 20V10.5Z"
-                    fill="white"
-                  />
-                </svg>
-              </div>
+              <img src="/image/logo.jpeg" alt="PropertyToday Logo" className="h-12 w-auto" />
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-navy)] mb-2">
               Welcome Back
@@ -114,9 +184,19 @@ const LoginPage = () => {
             </p>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
+          {/* API error banner */}
+          {apiError && (
+            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-[var(--radius-md)] bg-[var(--color-danger-light)] border border-[var(--color-danger)]/30">
+              <AlertCircle className="w-5 h-5 text-[var(--color-danger)] shrink-0 mt-0.5" />
+              <p className="text-sm text-[var(--color-danger)] font-medium leading-relaxed">
+                {apiError}
+              </p>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            {/* Email */}
             <div>
               <CustomInput
                 label="Email Address"
@@ -140,7 +220,7 @@ const LoginPage = () => {
               )}
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
               <CustomInput
                 label="Password"
@@ -164,18 +244,20 @@ const LoginPage = () => {
               )}
             </div>
 
-            {/* Remember Me & Forgot Password */}
+            {/* Remember Me & Forgot */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-[var(--color-primary)] focus:ring-[var(--color-primary)] border-[var(--color-border)] rounded cursor-pointer accent-[var(--color-primary)]"
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm text-[var(--color-text-secondary)] cursor-pointer"
+                  className="ml-2 block text-sm text-[var(--color-text-secondary)] cursor-pointer select-none"
                 >
                   Remember me
                 </label>
@@ -191,7 +273,7 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
@@ -225,7 +307,7 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Sign Up Link */}
+          {/* Sign Up */}
           <div className="mt-6 text-center">
             <p className="text-sm text-[var(--color-text-secondary)]">
               Don't have an account?{" "}

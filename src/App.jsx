@@ -21,6 +21,8 @@ import LocationsPage from "./pages/listing/LocationsPage";
 import AgentLayout from "./layout/AgentLayout";
 import AgentDashboard from "./pages/agent/AgentDashboard";
 import AgentProfile from "./pages/agent/AgentProfile";
+import ProtectedRoute from "./service/ProtectedRoute";
+import ManagePropertyType from "./pages/admin/property/ManagePropertyType";
 
 const App = () => {
   return (
@@ -51,18 +53,37 @@ const App = () => {
           <Route path="locations/:cityId" element={<LocationsPage />} />
         </Route>
 
-        <Route path="/agent" element={<AgentLayout />}>
+        <Route
+          path="/agent"
+          element={
+            <ProtectedRoute allowedRoles={["agent"]}>
+              <AgentLayout />
+             </ProtectedRoute>
+          }
+        >
           <Route index element={<AgentDashboard />} />
           <Route path="profile" element={<AgentProfile />} />
           {/* Add more agent routes here as you build them */}
         </Route>
 
         {/* Admin Layout */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route
+          path="/admin"
+          element={
+            // <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminLayout />
+            // </ProtectedRoute>
+          }
+        >
           <Route index element={<AdminDashboard />} />
           {/* Additional admin routes can be added here */}
           <Route path="site-settings" element={<SiteSettings />} />
           <Route path="profile" element={<AdminProfile />} />
+
+          {/* Manage Property routes  */}
+          <Route path="properties/types" element={<ManagePropertyType />} />
+
+          
         </Route>
       </Routes>
     </Router>

@@ -14,7 +14,7 @@ const AdminLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         <AdminNavbar setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 p-4 sm:p-6 overflow-auto min-h-screen lg:pl-72">
+        <main className="flex-1 p-4 sm:p-6 overflow-auto min-h-screen lg:pl-72 ml-2">
           <Outlet />
         </main>
       </div>

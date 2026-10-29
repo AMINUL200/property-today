@@ -7,15 +7,210 @@ import {
   LayoutDashboard,
   Phone,
   PlusCircle,
+  UserCircle,
+  Settings,
+  Heart,
+  Home,
+  Building2,
+  Calendar,
+  MessageSquare,
+  Wallet,
+  Users,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Navbar = ({ toggleMenu }) => {
   const [scrolled, setScrolled] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState({});
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const dropdownRefs = useRef({});
+  const profileRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // ---------- Auth ----------
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const userRole = (user?.role || "user").toLowerCase();
+
+  // ---------- Derived user data ----------
+  const userData = {
+    name: user?.name || "User",
+    email: user?.email || "",
+    role: user?.role
+      ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+      : "User",
+    initials: (user?.name || "U")
+      .split(" ")
+      .map((w) => w.charAt(0))
+      .slice(0, 2)
+      .join("")
+      .toUpperCase(),
+  };
+
+  // ---------- Dashboard path by role ----------
+  const getDashboardPath = (role) => {
+    switch ((role || "").toLowerCase()) {
+      case "admin":
+        return "/admin";
+      case "agent":
+        return "/agent";
+      default:
+        return "/dashboard";
+    }
+  };
+
+  // ---------- Profile dropdown links by role ----------
+  const getProfileMenuLinks = (role) => {
+    if (role === "admin") {
+      return [
+        {
+          label: "Admin Dashboard",
+          desc: "Manage the platform",
+          icon: LayoutDashboard,
+          tone: "primary",
+          to: "/admin",
+        },
+        {
+          label: "Manage Properties",
+          desc: "All listings and types",
+          icon: Building2,
+          tone: "gold",
+          to: "/admin/properties/all",
+        },
+        {
+          label: "Users & Agents",
+          desc: "Manage accounts",
+          icon: Users,
+          tone: "primary",
+          to: "/admin/users/all",
+        },
+        {
+          label: "Site Settings",
+          desc: "Configure the site",
+          icon: Settings,
+          tone: "success",
+          to: "/admin/site-settings",
+        },
+      ];
+    }
+
+    if (role === "agent") {
+      return [
+        {
+          label: "Agent Dashboard",
+          desc: "Your listings & leads",
+          icon: LayoutDashboard,
+          tone: "primary",
+          to: "/agent",
+        },
+        {
+          label: "My Listings",
+          desc: "Manage your properties",
+          icon: Building2,
+          tone: "gold",
+          to: "/agent/listings/all",
+        },
+        {
+          label: "Add Listing",
+          desc: "List a new property",
+          icon: PlusCircle,
+          tone: "primary",
+          to: "/agent/listings/add/sale",
+        },
+        {
+          label: "Leads & Enquiries",
+          desc: "Client enquiries",
+          icon: MessageSquare,
+          tone: "success",
+          to: "/agent/leads/all",
+        },
+        {
+          label: "Site Visits",
+          desc: "Scheduled visits",
+          icon: Calendar,
+          tone: "primary",
+          to: "/agent/site-visits",
+        },
+        {
+          label: "Earnings",
+          desc: "Payouts & commission",
+          icon: Wallet,
+          tone: "gold",
+          to: "/agent/earnings",
+        },
+        {
+          label: "My Profile",
+          desc: "View and edit profile",
+          icon: UserCircle,
+          tone: "success",
+          to: "/agent/profile",
+        },
+      ];
+    }
+
+    // Default: normal user
+    return [
+      // {
+      //   label: "My Dashboard",
+      //   desc: "Overview of your activity",
+      //   icon: LayoutDashboard,
+      //   tone: "primary",
+      //   to: "/dashboard",
+      // },
+      {
+        label: "My Properties",
+        desc: "View your listed properties",
+        icon: Home,
+        tone: "gold",
+        to: "/my-properties",
+      },
+      {
+        label: "Schedule a Visit",
+        desc: "Book a property visit",
+        icon: Calendar,
+        tone: "primary",
+        to: "/schedule-visit",
+      },
+      {
+        label: "List Your Property",
+        desc: "Sell or rent your property",
+        icon: PlusCircle,
+        tone: "success",
+        to: "/list-property",
+      },
+      {
+        label: "Saved Properties",
+        desc: "Your bookmarked listings",
+        icon: Heart,
+        tone: "primary",
+        to: "/saved",
+      },
+      {
+        label: "My Profile",
+        desc: "View and edit profile",
+        icon: UserCircle,
+        tone: "gold",
+        to: "/profile",
+      },
+    ];
+  };
+
+  const toneStyles = {
+    primary: {
+      bg: "bg-[var(--color-primary-light)]",
+      text: "text-[var(--color-primary)]",
+    },
+    gold: {
+      bg: "bg-[var(--color-secondary-light)]",
+      text: "text-[var(--color-secondary-dark)]",
+    },
+    success: {
+      bg: "bg-[var(--color-success-light)]",
+      text: "text-[var(--color-success)]",
+    },
+  };
 
   /* =========================================================
      SCROLL EFFECT
@@ -31,7 +226,6 @@ const Navbar = ({ toggleMenu }) => {
      ========================================================= */
   const navLinks = [
     { id: "home", label: "Home", path: "/" },
-
     {
       id: "buy",
       label: "Buy",
@@ -43,7 +237,6 @@ const Navbar = ({ toggleMenu }) => {
         { id: "buy-commercial", label: "Commercial", path: "/buy/commercial" },
       ],
     },
-
     {
       id: "sell",
       label: "Sell",
@@ -57,7 +250,6 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
-
     {
       id: "rent",
       label: "Rent",
@@ -67,7 +259,6 @@ const Navbar = ({ toggleMenu }) => {
         { id: "rent-pg", label: "PG / Hostels", path: "/rent/pg" },
       ],
     },
-
     {
       id: "land",
       label: "Land & Plots",
@@ -85,7 +276,6 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
-
     {
       id: "new-projects",
       label: "New Projects",
@@ -107,7 +297,6 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
-
     {
       id: "services",
       label: "Services",
@@ -164,33 +353,25 @@ const Navbar = ({ toggleMenu }) => {
         },
       ],
     },
-
     { id: "locations", label: "Locations", path: "/locations" },
     { id: "about", label: "About Us", path: "/about" },
     { id: "contact", label: "Contact", path: "/contact" },
   ];
 
   /* =========================================================
-     AUTH
-     ========================================================= */
-  const isAuthenticated = false;
-  const userData = { user_type: 2 };
-
-  /* =========================================================
      CLOSE DROPDOWNS ON ROUTE CHANGE
      ========================================================= */
   useEffect(() => {
     setOpenDropdowns({});
+    setShowProfileMenu(false);
   }, [location.pathname]);
 
   /* =========================================================
-     TOGGLE DROPDOWN — single-open behaviour
+     TOGGLE DROPDOWN
      ========================================================= */
   const toggleDropdown = (dropdownId) => {
     setOpenDropdowns((prev) => {
-      // If this dropdown is already open → close everything
       if (prev[dropdownId]) return {};
-      // Otherwise → open this one and close all others
       return { [dropdownId]: true };
     });
   };
@@ -198,14 +379,18 @@ const Navbar = ({ toggleMenu }) => {
   const closeDropdown = () => setOpenDropdowns({});
 
   /* =========================================================
-     CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
+     CLOSE DROPDOWNS ON OUTSIDE CLICK
      ========================================================= */
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const clickedInside = Object.values(dropdownRefs.current).some(
+      const clickedInsideNav = Object.values(dropdownRefs.current).some(
         (ref) => ref && ref.contains(event.target)
       );
-      if (!clickedInside) setOpenDropdowns({});
+      if (!clickedInsideNav) setOpenDropdowns({});
+
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -213,7 +398,7 @@ const Navbar = ({ toggleMenu }) => {
   }, []);
 
   /* =========================================================
-     NORMAL NAVIGATION
+     NAVIGATION
      ========================================================= */
   const handleNavClick = (path) => {
     closeDropdown();
@@ -225,20 +410,13 @@ const Navbar = ({ toggleMenu }) => {
      ========================================================= */
   const handleLogout = () => {
     closeDropdown();
-    navigate("/");
+    setShowProfileMenu(false);
+    logout();
+    navigate("/login", { replace: true });
   };
 
   /* =========================================================
      RENDER NAV ITEM
-
-     `variant` ("desktop" | "tablet") keeps each nav's DOM refs
-     separate. Both navs render the same item ids, so sharing one
-     ref key made the hidden tablet nav overwrite the visible
-     desktop nav's ref for the first 6 items. The outside-click
-     check then thought clicks inside the open dropdown were
-     "outside", closed it on mousedown, and unmounted the link
-     before its click could fire. (Services isn't in the tablet
-     nav, which is why only it worked.)
      ========================================================= */
   const renderNavItem = (item, variant) => {
     const hasDropdown =
@@ -253,7 +431,6 @@ const Navbar = ({ toggleMenu }) => {
           dropdownRefs.current[`${variant}-${item.id}`] = el;
         }}
       >
-        {/* ---------- Parent button / link ---------- */}
         {hasDropdown ? (
           <button
             type="button"
@@ -281,7 +458,6 @@ const Navbar = ({ toggleMenu }) => {
           </RouterLink>
         )}
 
-        {/* ---------- Dropdown panel ---------- */}
         {hasDropdown && isOpen && (
           <div
             className="absolute top-full left-0 mt-1 w-72 bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-[999] overflow-hidden"
@@ -308,6 +484,8 @@ const Navbar = ({ toggleMenu }) => {
   /* =========================================================
      RENDER
      ========================================================= */
+  const profileLinks = getProfileMenuLinks(userRole);
+
   return (
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b border-[var(--color-border-light)] ${
@@ -337,44 +515,164 @@ const Navbar = ({ toggleMenu }) => {
 
         {/* ================= RIGHT-SIDE ACTIONS ================= */}
         <div className="hidden xl:flex items-center gap-2 shrink-0">
-          <a
-            href="tel:+01234567890"
-            aria-label="Call Now"
-            className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-[var(--radius-md)] text-[var(--color-navy)] border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors duration-200 whitespace-nowrap"
-          >
-            <Phone className="w-4 h-4" />
-            <span>Call Now</span>
-          </a>
+          {/* ---------- LOGGED OUT: only Call Now + List Your Property ---------- */}
+          {!isAuthenticated && (
+            <>
+              <a
+                href="tel:+01234567890"
+                aria-label="Call Now"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-[var(--radius-md)] text-[var(--color-navy)] border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors duration-200 whitespace-nowrap"
+              >
+                <Phone className="w-4 h-4" />
+                <span>Call Now</span>
+              </a>
 
-          <RouterLink
-            to="/list-property"
-            onClick={closeDropdown}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>List Your Property</span>
-          </RouterLink>
-
-          {isAuthenticated && userData?.user_type === 4 && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-danger)] hover:bg-red-700 hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
+              <RouterLink
+                to="/list-property"
+                onClick={closeDropdown}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>List Your Property</span>
+              </RouterLink>
+            </>
           )}
 
-          {isAuthenticated && userData?.user_type !== 4 && (
-            <RouterLink
-              to="/dashboard"
-              onClick={closeDropdown}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-[1px] transition-all duration-200 whitespace-nowrap"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Dashboard</span>
-            </RouterLink>
+          {/* ---------- LOGGED IN: profile dropdown only ---------- */}
+          {isAuthenticated && (
+            <div className="relative" ref={profileRef}>
+              <button
+                type="button"
+                onClick={() => setShowProfileMenu((o) => !o)}
+                className="flex items-center gap-2.5 p-1 pr-3 rounded-[var(--radius-md)] hover:bg-[var(--color-background-soft)] transition-colors duration-200"
+                aria-label="Profile menu"
+              >
+                <span className="relative w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)]">
+                  <span className="text-white text-xs font-bold">
+                    {userData.initials}
+                  </span>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[var(--color-success)] border-2 border-white" />
+                </span>
+
+                <span className="hidden 2xl:block text-left leading-tight">
+                  <span className="block text-sm font-bold text-[var(--color-navy)] max-w-[120px] truncate">
+                    {userData.name}
+                  </span>
+                  <span className="block text-[10px] text-[var(--color-text-muted)]">
+                    {userData.role}
+                  </span>
+                </span>
+
+                <ChevronDown
+                  className={`w-4 h-4 text-[var(--color-text-muted)] transition-transform duration-200 ${
+                    showProfileMenu ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* ---------- Profile Dropdown ---------- */}
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-72 max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar bg-white rounded-[var(--radius-lg)] shadow-[var(--shadow-xl)] border border-[var(--color-border-light)] z-[999] animate-pt-fade-in">
+                  {/* Header */}
+                  <div className="bg-navy-gradient px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="w-11 h-11 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
+                        <span className="text-white text-sm font-bold">
+                          {userData.initials}
+                        </span>
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-bold text-sm truncate">
+                          {userData.name}
+                        </p>
+                        <p className="text-white/70 text-xs truncate">
+                          {userData.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Role-specific menu items */}
+                  <div className="py-2">
+                    {profileLinks.map((link) => {
+                      const Icon = link.icon;
+                      const tone =
+                        toneStyles[link.tone] || toneStyles.primary;
+
+                      return (
+                        <RouterLink
+                          key={link.label}
+                          to={link.to}
+                          onClick={() => setShowProfileMenu(false)}
+                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-background-soft)] transition-colors text-left"
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center shrink-0 ${tone.bg}`}
+                          >
+                            <Icon className={`w-4 h-4 ${tone.text}`} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-[var(--color-navy)]">
+                              {link.label}
+                            </p>
+                            <p className="text-xs text-[var(--color-text-muted)]">
+                              {link.desc}
+                            </p>
+                          </div>
+                        </RouterLink>
+                      );
+                    })}
+                  </div>
+
+                  {/* Settings + Logout */}
+                  <div className="border-t border-[var(--color-border-light)]">
+                    <RouterLink
+                      to={
+                        userRole === "admin"
+                          ? "/admin/site-settings"
+                          : userRole === "agent"
+                            ? "/agent/settings/account"
+                            : "/settings"
+                      }
+                      onClick={() => setShowProfileMenu(false)}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-background-soft)] transition-colors text-left border-b border-[var(--color-border-light)]"
+                    >
+                      <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-background-muted)] flex items-center justify-center shrink-0">
+                        <Settings className="w-4 h-4 text-[var(--color-text-muted)]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-navy)]">
+                          Settings
+                        </p>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          Manage your preferences
+                        </p>
+                      </div>
+                    </RouterLink>
+
+                    <div className="p-2">
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-danger-light)] transition-colors rounded-[var(--radius-md)] text-left group"
+                      >
+                        <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-danger-light)] group-hover:bg-[var(--color-danger)]/20 flex items-center justify-center transition-colors shrink-0">
+                          <LogOut className="w-4 h-4 text-[var(--color-danger)]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[var(--color-danger)]">
+                            Logout
+                          </p>
+                          <p className="text-xs text-[var(--color-danger)]/70">
+                            Sign out of your account
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -385,13 +683,29 @@ const Navbar = ({ toggleMenu }) => {
 
         {/* ================= MOBILE ACTIONS ================= */}
         <div className="flex lg:hidden items-center gap-2">
-          <a
-            href="tel:+01234567890"
-            aria-label="Call Now"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors duration-200"
-          >
-            <Phone className="w-4 h-4" />
-          </a>
+          {/* Call icon only when logged out */}
+          {!isAuthenticated && (
+            <a
+              href="tel:+01234567890"
+              aria-label="Call Now"
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors duration-200"
+            >
+              <Phone className="w-4 h-4" />
+            </a>
+          )}
+
+          {/* Profile avatar on mobile when logged in */}
+          {isAuthenticated && (
+            <RouterLink
+              to={getDashboardPath(userRole)}
+              className="w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-[var(--shadow-primary)]"
+              aria-label="Dashboard"
+            >
+              <span className="text-white text-xs font-bold">
+                {userData.initials}
+              </span>
+            </RouterLink>
+          )}
 
           <button
             type="button"
@@ -403,6 +717,16 @@ const Navbar = ({ toggleMenu }) => {
           </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes pt-fade-in {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-pt-fade-in {
+          animation: pt-fade-in 0.18s ease-out;
+        }
+      `}</style>
     </header>
   );
 };
