@@ -3,14 +3,14 @@ import { useNavigate, Link } from "react-router-dom";
 import {
   UserPlus,
   ArrowLeft,
-  Check,
   User,
   Briefcase,
-  ShieldCheck,
-  Phone,
-  MapPin,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import CustomInput from "../../component/form/CustomInput";
+import { api } from "../../service/api";
+import { useAuth } from "../../context/AuthContext";
 
 const RegisterPage = () => {
   // ---------- Role selection ----------
@@ -35,36 +35,39 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
-    phone: "",
-    // agent-only fields
+    // Agent-only (optional extras — not required by the API)
     agencyName: "",
     city: "",
     experience: "",
   });
 
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const navigate = useNavigate();
 
-  // Handle input change
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  /* =========================================================
+     INPUT CHANGE
+     ========================================================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+    if (apiError) setApiError("");
   };
 
-  // Validate form
+  /* =========================================================
+     VALIDATION
+     ========================================================= */
   const validateForm = () => {
     const newErrors = {};
 
@@ -101,16 +104,6 @@ const RegisterPage = () => {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
-    // Agent-specific validation
-    if (accountType === "agent") {
-      if (!formData.agencyName.trim()) {
-        newErrors.agencyName = "Agency / firm name is required";
-      }
-      if (!formData.city.trim()) {
-        newErrors.city = "City is required";
-      }
-    }
-
     if (!agreedToTerms) {
       newErrors.terms = "You must agree to the terms and conditions";
     }
@@ -119,7 +112,9 @@ const RegisterPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Password strength
+  /* =========================================================
+     PASSWORD STRENGTH
+     ========================================================= */
   const getPasswordStrength = (password) => {
     if (!password) return { strength: 0, label: "", color: "" };
 
@@ -144,38 +139,96 @@ const RegisterPage = () => {
 
   const passwordStrength = getPasswordStrength(formData.password);
 
-  // Handle form submission
+  /* =========================================================
+     SUBMIT
+     ========================================================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError("");
 
-    if (validateForm()) {
-      setIsLoading(true);
+    if (!validateForm()) return;
 
-      // Simulate API call
-      setTimeout(() => {
-        console.log("Register data:", {
-          ...formData,
-          accountType,
-        });
-        // Add your registration API call here
-        setIsLoading(false);
-        // navigate("/login");
-      }, 1500);
+    setIsLoading(true);
+
+    try {
+      // Body shape matches your API contract exactly
+      const payload = {
+        name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.replace(/\D/g, ""),
+        role: accountType, // "user" or "agent"
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+      };
+
+      const res = await api.post("/register", payload);
+
+      const responseBody = res?.data;
+
+      if (!responseBody?.success) {
+        throw {
+          message:
+            responseBody?.message ||
+            "Registration failed. Please check your details and try again.",
+        };
+      }
+
+      // If the API returns a token + user (auto-login), persist via AuthContext
+      if (responseBody?.data?.token && responseBody?.data?.user) {
+        login(responseBody);
+
+        const role = (responseBody.data.user.role || "").toLowerCase();
+        const redirectTo =
+          role === "agent" ? "/agent" : role === "admin" ? "/admin" : "/";
+
+        navigate(redirectTo, { replace: true });
+        return;
+      }
+
+      // Otherwise, send user to login with a friendly prefill
+      navigate("/login", {
+        replace: true,
+        state: {
+          email: formData.email.trim(),
+          registered: true,
+        },
+      });
+    } catch (err) {
+      let message =
+        err?.message ||
+        err?.data?.message ||
+        "Registration failed. Please try again.";
+
+      // Laravel validation errors → { errors: { email: ["..."] } }
+      if (err?.data?.errors) {
+        const firstKey = Object.keys(err.data.errors)[0];
+        if (firstKey && Array.isArray(err.data.errors[firstKey])) {
+          message = err.data.errors[firstKey][0];
+        }
+      }
+
+      setApiError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  /* =========================================================
+     UI
+     ========================================================= */
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-soft)] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-soft)] py-12 px-4 sm:px-6 lg:px-8 relative">
       {/* Brand glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-[var(--color-primary)]/15 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[var(--color-secondary)]/15 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[var(--color-secondary)]/15 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[var(--color-primary)]/10 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-lg w-full relative z-10">
-        {/* Back button */}
+        {/* Back */}
         <button
+          type="button"
           onClick={() => navigate("/")}
           className="mb-6 flex items-center space-x-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors group"
         >
@@ -183,7 +236,7 @@ const RegisterPage = () => {
           <span className="font-medium">Back to Home</span>
         </button>
 
-        {/* Register Card */}
+        {/* Card */}
         <div className="bg-white rounded-[var(--radius-2xl)] shadow-[var(--shadow-xl)] p-8 border border-[var(--color-border-light)]">
           {/* Logo + Title */}
           <div className="text-center mb-8">
@@ -215,7 +268,17 @@ const RegisterPage = () => {
             </p>
           </div>
 
-          {/* ---------- Account Type Selector ---------- */}
+          {/* API error banner */}
+          {apiError && (
+            <div className="mb-5 flex items-start gap-3 p-3.5 rounded-[var(--radius-md)] bg-[var(--color-danger-light)] border border-[var(--color-danger)]/30">
+              <AlertCircle className="w-5 h-5 text-[var(--color-danger)] shrink-0 mt-0.5" />
+              <p className="text-sm text-[var(--color-danger)] font-medium leading-relaxed">
+                {apiError}
+              </p>
+            </div>
+          )}
+
+          {/* Account type selector */}
           <div className="mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-3">
               I am registering as
@@ -229,7 +292,10 @@ const RegisterPage = () => {
                   <button
                     key={type.id}
                     type="button"
-                    onClick={() => setAccountType(type.id)}
+                    onClick={() => {
+                      setAccountType(type.id);
+                      setApiError("");
+                    }}
                     className={`group flex flex-col items-start text-left p-4 rounded-[var(--radius-lg)] border-2 transition-all duration-200 ${
                       isActive
                         ? "border-[var(--color-primary)] bg-[var(--color-primary-light)]/40 shadow-[var(--shadow-sm)]"
@@ -262,15 +328,14 @@ const RegisterPage = () => {
               })}
             </div>
 
-            {/* Admin note */}
             <p className="mt-3 text-[11px] text-[var(--color-text-light)] text-center">
               Admin accounts are created internally and cannot be registered
               here.
             </p>
           </div>
 
-          {/* ---------- Register Form ---------- */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Full Name */}
             <div>
               <CustomInput
@@ -343,73 +408,52 @@ const RegisterPage = () => {
               )}
             </div>
 
-            {/* ---------- AGENT-ONLY FIELDS ---------- */}
+            {/* Agent extras (optional — not sent to API) */}
             {accountType === "agent" && (
-              <div className="space-y-5 pt-2 pb-1 px-4 rounded-[var(--radius-lg)] bg-[var(--color-primary-light)]/30 border border-[var(--color-primary)]/15">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--color-primary)] pt-2">
-                  Agent Details
-                </p>
+              <div className="space-y-4 pt-3 pb-3 px-4 rounded-[var(--radius-lg)] bg-[var(--color-primary-light)]/30 border border-[var(--color-primary)]/15">
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--color-primary)]">
+                    Agency Details
+                  </p>
+                  <span className="text-[10px] text-[var(--color-text-light)]">
+                    Optional
+                  </span>
+                </div>
 
-                {/* Agency Name */}
-                <div>
+                <CustomInput
+                  label="Agency / Firm Name"
+                  name="agencyName"
+                  type="text"
+                  autoComplete="organization"
+                  value={formData.agencyName}
+                  onChange={handleChange}
+                  placeholder=""
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <CustomInput
-                    label="Agency / Firm Name"
-                    name="agencyName"
+                    label="City"
+                    name="city"
                     type="text"
-                    autoComplete="organization"
-                    value={formData.agencyName}
+                    autoComplete="address-level2"
+                    value={formData.city}
                     onChange={handleChange}
                     placeholder=""
-                    className={
-                      errors.agencyName
-                        ? "border-[var(--color-danger)] focus:ring-[var(--color-danger)]/20 focus:border-[var(--color-danger)]"
-                        : ""
-                    }
                   />
-                  {errors.agencyName && (
-                    <p className="mt-2 text-sm text-[var(--color-danger)] flex items-center">
-                      <span className="inline-block w-1 h-1 bg-[var(--color-danger)] rounded-full mr-2" />
-                      {errors.agencyName}
-                    </p>
-                  )}
+                  <CustomInput
+                    label="Years of Experience"
+                    name="experience"
+                    type="text"
+                    value={formData.experience}
+                    onChange={handleChange}
+                    placeholder=""
+                  />
                 </div>
 
-                {/* City + Experience */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
-                  <div>
-                    <CustomInput
-                      label="City"
-                      name="city"
-                      type="text"
-                      autoComplete="address-level2"
-                      value={formData.city}
-                      onChange={handleChange}
-                      placeholder=""
-                      className={
-                        errors.city
-                          ? "border-[var(--color-danger)] focus:ring-[var(--color-danger)]/20 focus:border-[var(--color-danger)]"
-                          : ""
-                      }
-                    />
-                    {errors.city && (
-                      <p className="mt-2 text-sm text-[var(--color-danger)] flex items-center">
-                        <span className="inline-block w-1 h-1 bg-[var(--color-danger)] rounded-full mr-2" />
-                        {errors.city}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <CustomInput
-                      label="Years of Experience"
-                      name="experience"
-                      type="text"
-                      value={formData.experience}
-                      onChange={handleChange}
-                      placeholder=""
-                    />
-                  </div>
-                </div>
+                <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed pb-1">
+                  You can complete your agency profile from your dashboard
+                  after signing up.
+                </p>
               </div>
             )}
 
@@ -430,22 +474,19 @@ const RegisterPage = () => {
                 }
               />
 
-              {/* Strength bar */}
               {formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 h-2 bg-[var(--color-background-muted)] rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${passwordStrength.color}`}
-                        style={{
-                          width: `${(passwordStrength.strength / 5) * 100}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">
-                      {passwordStrength.label}
-                    </span>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-[var(--color-background-muted)] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                      style={{
+                        width: `${(passwordStrength.strength / 5) * 100}%`,
+                      }}
+                    />
                   </div>
+                  <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+                    {passwordStrength.label}
+                  </span>
                 </div>
               )}
 
@@ -481,7 +522,7 @@ const RegisterPage = () => {
               )}
             </div>
 
-            {/* ---------- Terms & Conditions ---------- */}
+            {/* Terms */}
             <div className="flex items-start gap-3 pt-1">
               <input
                 id="terms"
@@ -546,7 +587,7 @@ const RegisterPage = () => {
             </button>
           </form>
 
-          {/* Sign In Link */}
+          {/* Sign In link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-[var(--color-text-secondary)]">
               Already have an account?{" "}
