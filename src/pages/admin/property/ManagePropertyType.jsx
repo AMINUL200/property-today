@@ -8,6 +8,7 @@ import {
   Power,
   PowerOff,
   ChevronDown,
+  ChevronRight,
   X,
   Loader2,
   AlertCircle,
@@ -18,46 +19,47 @@ import {
   Map,
   Bed,
   Layers,
-  Tag,
-  Star,
   Eye,
   EyeOff,
+  FolderTree,
+  CornerDownRight,
 } from "lucide-react";
 import { api } from "../../../service/api";
 
 /* =========================================================
-   API ENDPOINTS
-   GET    /api/v1/admin/property-types         → list
-   POST   /api/v1/admin/property-types         → create
-   PUT    /api/v1/admin/property-types/:id     → update
-   PATCH  /api/v1/admin/property-types/:id     → partial update (activate/deactivate)
-   DELETE /api/v1/admin/property-types/:id     → delete
+   API ENDPOINTS (Property Categories)
+   GET    /api/v1/admin/property-categories             → list (paginated)
+   POST   /api/v1/admin/property-categories             → create
+   PUT    /api/v1/admin/property-categories/:id         → update
+   PATCH  /api/v1/admin/property-categories/:id         → partial (active toggle)
+   DELETE /api/v1/admin/property-categories/:id         → delete
    ========================================================= */
 
-/* ---------- Icon name → component map (matches API `icon` field) ---------- */
+/* ---------- Icon map ---------- */
 const ICON_MAP = {
   house: Home,
   "building-2": Building2,
+  building: Building2,
   store: Store,
   map: Map,
   bed: Bed,
 };
 
-/* ---------- Empty form state ---------- */
+/* ---------- Empty form ---------- */
 const EMPTY_FORM = {
   name: "",
-  code: "",
   description: "",
-  supports_sale: false,
-  supports_rent: false,
-  supports_lease: false,
-  supports_area: false,
+  icon: "",
+  sort_order: 0,
   is_active: true,
-  is_featured: false,
+  parent_id: null,
 };
 
 const ManagePropertyType = () => {
-  const [propertyTypes, setPropertyTypes] = useState([]);
+  // ---------- Raw data from ALL pages ----------
+  const [categories, setCategories] = useState([]);
+  // ---------- Purely for "showing X of Y" text ----------
+  const [meta, setMeta] = useState({ total: 0 });
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [error, setError] = useState("");
@@ -65,35 +67,93 @@ const ManagePropertyType = () => {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
+  const [statusFilter, setStatusFilter] = useState("all");
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const statusRef = useRef(null);
 
-  // Modal state
+  // Modal
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("create"); // create | edit
+  const [modalMode, setModalMode] = useState("create");
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
   const [formSaving, setFormSaving] = useState(false);
+  const [isChildMode, setIsChildMode] = useState(false);
 
-  // Delete confirmation
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  // Delete
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Expanded parents
+  const [expandedParents, setExpandedParents] = useState({});
+
   /* =========================================================
-     FETCH LIST
+     FETCH ALL PAGES
+     The API paginates children first (DESC by id), so the
+     parent categories land on later pages. We MUST fetch every
+     page and merge before building the tree, otherwise page 1
+     only contains children and the tree renders blank.
      ========================================================= */
-  const fetchTypes = async () => {
+  const fetchAllCategories = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/admin/property-types");
-      const list = res?.data?.data?.property_types || [];
-      setPropertyTypes(list);
+      // First request — page 1
+      const firstRes = await api.get("/admin/property-categories", {
+        params: { page: 1 },
+      });
+
+      const firstBody = firstRes?.data;
+      const firstList = Array.isArray(firstBody?.data)
+        ? firstBody.data
+        : firstBody?.data?.property_categories || [];
+      const pag = firstBody?.pagination || null;
+
+      const lastPage = pag?.last_page || 1;
+
+      // Fetch remaining pages in parallel
+      let allItems = [...firstList];
+
+      if (lastPage > 1) {
+        const pagePromises = [];
+        for (let p = 2; p <= lastPage; p++) {
+          pagePromises.push(
+            api.get("/admin/property-categories", { params: { page: p } })
+          );
+        }
+
+        const results = await Promise.all(pagePromises);
+
+        results.forEach((r) => {
+          const body = r?.data;
+          const list = Array.isArray(body?.data)
+            ? body.data
+            : body?.data?.property_categories || [];
+          allItems = [...allItems, ...list];
+        });
+      }
+
+      // Dedupe by id (defensive, in case API overlaps)
+      const seen = new Set();
+      const deduped = allItems.filter((item) => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+
+      setCategories(deduped);
+      setMeta({ total: pag?.total ?? deduped.length });
+
+      // Auto-expand all parents that have children
+      const parentIdsWithChildren = {};
+      deduped.forEach((item) => {
+        if (item.parent_id) parentIdsWithChildren[item.parent_id] = true;
+      });
+      setExpandedParents((prev) => ({ ...prev, ...parentIdsWithChildren }));
     } catch (err) {
       setError(
-        err?.message || "Failed to load property types. Please try again."
+        err?.message ||
+          "Failed to load property categories. Please try again."
       );
     } finally {
       setLoading(false);
@@ -101,10 +161,11 @@ const ManagePropertyType = () => {
   };
 
   useEffect(() => {
-    fetchTypes();
+    fetchAllCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ---------- Close status dropdown outside click ---------- */
+  /* ---------- Outside click for status filter ---------- */
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (statusRef.current && !statusRef.current.contains(event.target)) {
@@ -123,50 +184,37 @@ const ManagePropertyType = () => {
     if (success) setSuccess("");
   };
 
-  const autoCode = (name) =>
-    name
-      .trim()
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "");
-
   const setField = (key, value) => {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      // Auto-generate code from name in create mode only when user hasn't touched code
-      if (key === "name" && modalMode === "create" && !prev.code) {
-        next.code = autoCode(value);
-      }
-      return next;
-    });
+    setForm((prev) => ({ ...prev, [key]: value }));
     if (formError) setFormError("");
   };
+
+  const parentOptions = categories.filter((c) => !c.parent_id);
 
   /* =========================================================
      OPEN MODALS
      ========================================================= */
-  const openCreateModal = () => {
+  const openCreateModal = (parentId = null) => {
     setModalMode("create");
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setIsChildMode(!!parentId);
+    setForm({ ...EMPTY_FORM, parent_id: parentId });
     setFormError("");
     setModalOpen(true);
     clearBanners();
   };
 
-  const openEditModal = (type) => {
+  const openEditModal = (cat) => {
     setModalMode("edit");
-    setEditingId(type.id);
+    setEditingId(cat.id);
+    setIsChildMode(!!cat.parent_id);
     setForm({
-      name: type.name || "",
-      code: type.code || "",
-      description: type.description || "",
-      supports_sale: !!type.features?.sale,
-      supports_rent: !!type.features?.rent,
-      supports_lease: !!type.features?.lease,
-      supports_area: !!type.features?.area,
-      is_active: !!type.is_active,
-      is_featured: !!type.is_featured,
+      name: cat.name || "",
+      description: cat.description || "",
+      icon: cat.icon || "",
+      sort_order: cat.sort_order ?? 0,
+      is_active: !!cat.is_active,
+      parent_id: cat.parent_id ?? null,
     });
     setFormError("");
     setModalOpen(true);
@@ -179,6 +227,7 @@ const ManagePropertyType = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setFormError("");
+    setIsChildMode(false);
   };
 
   /* =========================================================
@@ -188,47 +237,53 @@ const ManagePropertyType = () => {
     e.preventDefault();
     setFormError("");
 
-    // Basic client-side validation
     if (!form.name.trim()) {
-      setFormError("Property type name is required.");
+      setFormError("Category name is required.");
       return;
     }
-    if (!form.code.trim()) {
-      setFormError("Code is required.");
-      return;
+
+    const payload = {
+      name: form.name.trim(),
+      description: form.description || null,
+      icon: form.icon || null,
+      sort_order: Number(form.sort_order) || 0,
+      is_active: !!form.is_active,
+    };
+
+    if (isChildMode) {
+      if (!form.parent_id) {
+        setFormError("Please select a parent category.");
+        return;
+      }
+      payload.parent_id = Number(form.parent_id);
+    } else {
+      payload.parent_id = null;
     }
 
     setFormSaving(true);
 
     try {
       if (modalMode === "create") {
-        const res = await api.post("/admin/property-types", form);
-        const created = res?.data?.data?.property_type;
-        if (created) {
-          setPropertyTypes((prev) => [created, ...prev]);
-        } else {
-          await fetchTypes();
-        }
-        setSuccess(res?.data?.message || "Property type created successfully.");
+        const res = await api.post("/admin/property-categories", payload);
+        setSuccess(
+          res?.data?.message || "Property category created successfully."
+        );
       } else {
-        const res = await api.put(`/admin/property-types/${editingId}`, form);
-        const updated = res?.data?.data?.property_type;
-        if (updated) {
-          setPropertyTypes((prev) =>
-            prev.map((t) => (t.id === editingId ? updated : t))
-          );
-        } else {
-          await fetchTypes();
-        }
-        setSuccess(res?.data?.message || "Property type updated successfully.");
+        const res = await api.put(
+          `/admin/property-categories/${editingId}`,
+          payload
+        );
+        setSuccess(
+          res?.data?.message || "Property category updated successfully."
+        );
       }
-
       closeModal();
+      await fetchAllCategories();
     } catch (err) {
       let message =
         err?.message ||
         err?.data?.message ||
-        "Failed to save property type. Please try again.";
+        "Failed to save category. Please try again.";
 
       if (err?.data?.errors) {
         const firstKey = Object.keys(err.data.errors)[0];
@@ -244,35 +299,32 @@ const ManagePropertyType = () => {
   };
 
   /* =========================================================
-     TOGGLE ACTIVE (PATCH)
+     TOGGLE ACTIVE
      ========================================================= */
-  const handleToggleActive = async (type) => {
-    setActionLoadingId(type.id);
+  const handleToggleActive = async (cat) => {
+    setActionLoadingId(cat.id);
     clearBanners();
 
     try {
-      const res = await api.put(`/admin/property-types/${type.id}`, {
-        is_active: !type.is_active,
+      const res = await api.patch(`/admin/property-categories/${cat.id}`, {
+        is_active: !cat.is_active,
       });
 
-      const updated = res?.data?.data?.property_type;
+      const updated =
+        res?.data?.data?.property_category || res?.data?.data || null;
 
-      setPropertyTypes((prev) =>
-        prev.map((t) =>
-          t.id === type.id
-            ? updated || { ...t, is_active: !t.is_active }
-            : t
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.id === cat.id ? updated || { ...c, is_active: !c.is_active } : c
         )
       );
 
       setSuccess(
         res?.data?.message ||
-          `Property type ${!type.is_active ? "activated" : "deactivated"}.`
+          `Category ${!cat.is_active ? "activated" : "deactivated"}.`
       );
     } catch (err) {
-      setError(
-        err?.message || "Failed to update status. Please try again."
-      );
+      setError(err?.message || "Failed to update status. Please try again.");
     } finally {
       setActionLoadingId(null);
     }
@@ -282,49 +334,85 @@ const ManagePropertyType = () => {
      DELETE
      ========================================================= */
   const handleDelete = async () => {
-    if (!deleteConfirmId) return;
+    if (!deleteConfirm) return;
 
     setDeleting(true);
     clearBanners();
 
     try {
-      const res = await api.delete(`/admin/property-types/${deleteConfirmId}`);
-      setPropertyTypes((prev) =>
-        prev.filter((t) => t.id !== deleteConfirmId)
+      const res = await api.delete(
+        `/admin/property-categories/${deleteConfirm.id}`
       );
-      setSuccess(res?.data?.message || "Property type deleted successfully.");
-      setDeleteConfirmId(null);
+      setCategories((prev) =>
+        prev.filter((c) => c.id !== deleteConfirm.id)
+      );
+      setSuccess(res?.data?.message || "Category deleted successfully.");
+      setDeleteConfirm(null);
+      await fetchAllCategories();
     } catch (err) {
-      setError(err?.message || "Failed to delete. Please try again.");
+      setError(err?.message || "Failed to delete category.");
     } finally {
       setDeleting(false);
     }
   };
 
   /* =========================================================
-     FILTERED LIST
+     TREE BUILDER — handles orphans gracefully
      ========================================================= */
-  const filteredTypes = propertyTypes.filter((type) => {
+  const buildTree = (list) => {
+    const parents = [];
+    const childrenMap = {};
+    const orphans = []; // children whose parent isn't in the list
+
+    const parentIds = new Set(
+      list.filter((c) => !c.parent_id).map((c) => c.id)
+    );
+
+    list.forEach((item) => {
+      if (!item.parent_id) {
+        parents.push(item);
+      } else {
+        if (!childrenMap[item.parent_id]) childrenMap[item.parent_id] = [];
+        childrenMap[item.parent_id].push(item);
+
+        // If parent isn't in the list, it's an orphan
+        if (!parentIds.has(item.parent_id)) {
+          orphans.push(item);
+        }
+      }
+    });
+
+    return { parents, childrenMap, orphans };
+  };
+
+  /* ---------- Filter ---------- */
+  const filtered = categories.filter((cat) => {
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      !searchQuery.trim() ||
-      type.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      type.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (type.description || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      !q ||
+      cat.name.toLowerCase().includes(q) ||
+      cat.slug.toLowerCase().includes(q) ||
+      (cat.description || "").toLowerCase().includes(q) ||
+      (cat.parent?.name || "").toLowerCase().includes(q);
 
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "active" && type.is_active) ||
-      (statusFilter === "inactive" && !type.is_active);
+      (statusFilter === "active" && cat.is_active) ||
+      (statusFilter === "inactive" && !cat.is_active);
 
     return matchesSearch && matchesStatus;
   });
 
+  const { parents, childrenMap, orphans } = buildTree(filtered);
+
   /* ---------- Stats ---------- */
-  const totalCount = propertyTypes.length;
-  const activeCount = propertyTypes.filter((t) => t.is_active).length;
-  const featuredCount = propertyTypes.filter((t) => t.is_featured).length;
+  const totalCount = categories.length;
+  const parentCount = categories.filter((c) => !c.parent_id).length;
+  const childCount = categories.filter((c) => c.parent_id).length;
+  const activeCount = categories.filter((c) => c.is_active).length;
+
+  const toggleExpand = (id) =>
+    setExpandedParents((prev) => ({ ...prev, [id]: !prev[id] }));
 
   /* =========================================================
      UI
@@ -335,44 +423,30 @@ const ManagePropertyType = () => {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[var(--color-navy)]">
-            Property Types
+            Property Categories
           </h1>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Manage the property categories available on the platform.
+            Manage parent and child categories for properties on the platform.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={openCreateModal}
+          onClick={() => openCreateModal(null)}
           className="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] hover:-translate-y-0.5 transition-all duration-200"
         >
           <Plus className="w-4 h-4" />
-          Add Property Type
+          Add Category
         </button>
       </div>
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {[
-          {
-            label: "Total Types",
-            value: totalCount,
-            icon: Layers,
-            accent: "primary",
-          },
-          {
-            label: "Active",
-            value: activeCount,
-            icon: CheckCircle2,
-            accent: "success",
-          },
-          {
-            label: "Featured",
-            value: featuredCount,
-            icon: Star,
-            accent: "gold",
-          },
+          { label: "Total", value: totalCount, icon: Layers, accent: "primary" },
+          { label: "Parents", value: parentCount, icon: FolderTree, accent: "gold" },
+          { label: "Children", value: childCount, icon: CornerDownRight, accent: "primary" },
+          { label: "Active", value: activeCount, icon: CheckCircle2, accent: "success" },
         ].map((stat) => {
           const Icon = stat.icon;
           const accentMap = {
@@ -418,35 +492,29 @@ const ManagePropertyType = () => {
       {error && (
         <div className="mb-5 flex items-start gap-3 p-4 rounded-[var(--radius-md)] bg-[var(--color-danger-light)] border border-[var(--color-danger)]/30">
           <AlertCircle className="w-5 h-5 text-[var(--color-danger)] shrink-0 mt-0.5" />
-          <p className="text-sm text-[var(--color-danger)] font-medium">
-            {error}
-          </p>
+          <p className="text-sm text-[var(--color-danger)] font-medium">{error}</p>
         </div>
       )}
       {success && (
         <div className="mb-5 flex items-start gap-3 p-4 rounded-[var(--radius-md)] bg-[var(--color-success-light)] border border-[var(--color-success)]/30">
           <CheckCircle2 className="w-5 h-5 text-[var(--color-success)] shrink-0 mt-0.5" />
-          <p className="text-sm text-[var(--color-success)] font-medium">
-            {success}
-          </p>
+          <p className="text-sm text-[var(--color-success)] font-medium">{success}</p>
         </div>
       )}
 
       {/* Toolbar */}
       <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border-light)] shadow-[var(--shadow-sm)] p-4 mb-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        {/* Search */}
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-light)]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, code, or description…"
+            placeholder="Search by name, slug, description, or parent…"
             className="w-full pl-10 pr-4 py-2.5 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background-soft)] focus:border-[var(--color-primary)] focus:bg-white transition-colors outline-none"
           />
         </div>
 
-        {/* Status filter */}
         <div className="relative" ref={statusRef}>
           <button
             type="button"
@@ -494,212 +562,303 @@ const ManagePropertyType = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* List */}
       <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-border-light)] shadow-[var(--shadow-sm)] overflow-hidden">
         {loading ? (
           <div className="p-12 flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
             <p className="text-sm text-[var(--color-text-muted)]">
-              Loading property types…
+              Loading categories…
             </p>
           </div>
-        ) : filteredTypes.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="p-12 text-center">
             <span className="w-16 h-16 mx-auto rounded-full bg-[var(--color-primary-light)] flex items-center justify-center">
               <Layers className="w-8 h-8 text-[var(--color-primary)]" />
             </span>
             <h3 className="mt-4 text-base font-bold text-[var(--color-navy)]">
               {searchQuery || statusFilter !== "all"
-                ? "No matching property types"
-                : "No property types yet"}
+                ? "No matching categories"
+                : "No categories yet"}
             </h3>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
               {searchQuery || statusFilter !== "all"
                 ? "Try adjusting your search or filter."
-                : "Create your first property type to get started."}
+                : "Create your first property category to get started."}
             </p>
             {!searchQuery && statusFilter === "all" && (
               <button
                 type="button"
-                onClick={openCreateModal}
+                onClick={() => openCreateModal(null)}
                 className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-[var(--radius-md)] text-white bg-[var(--color-primary)] shadow-[var(--shadow-primary)] hover:bg-[var(--color-primary-hover)] transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Add Property Type
+                Add Category
               </button>
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-[var(--color-background-soft)] border-b border-[var(--color-border-light)]">
-                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                    Property Type
-                  </th>
-                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                    Code
-                  </th>
-                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                    Features
-                  </th>
-                  <th className="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                    Status
-                  </th>
-                  <th className="text-right px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border-light)]">
-                {filteredTypes.map((type) => {
-                  const IconComp = ICON_MAP[type.icon] || Layers;
-                  const isRowLoading = actionLoadingId === type.id;
+          <div className="divide-y divide-[var(--color-border-light)]">
+            {parents.map((parent) => {
+              const children = childrenMap[parent.id] || [];
+              const isExpanded = expandedParents[parent.id];
+              const ParentIcon = ICON_MAP[parent.icon] || Layers;
 
-                  const featureChips = [
-                    type.features?.sale && "Sale",
-                    type.features?.rent && "Rent",
-                    type.features?.lease && "Lease",
-                    type.features?.area && "Area",
-                    type.features?.bedrooms && "Beds",
-                    type.features?.bathrooms && "Baths",
-                    type.features?.furnishing && "Furnishing",
-                    type.features?.parking && "Parking",
-                  ].filter(Boolean);
-
-                  return (
-                    <tr
-                      key={type.id}
-                      className="hover:bg-[var(--color-background-soft)]/50 transition-colors"
+              return (
+                <div key={parent.id}>
+                  {/* Parent row */}
+                  <div className="flex items-center gap-3 px-5 py-4 hover:bg-[var(--color-background-soft)]/50 transition-colors">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(parent.id)}
+                      className={`w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
+                        children.length > 0
+                          ? "text-[var(--color-text-muted)] hover:bg-[var(--color-background-muted)] hover:text-[var(--color-navy)]"
+                          : "text-transparent cursor-default"
+                      }`}
+                      disabled={children.length === 0}
                     >
-                      {/* Type cell */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="w-10 h-10 shrink-0 rounded-[var(--radius-md)] bg-[var(--color-primary-light)] flex items-center justify-center">
-                            <IconComp className="w-5 h-5 text-[var(--color-primary)]" />
-                          </span>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold text-[var(--color-navy)]">
-                                {type.name}
-                              </p>
-                              {type.is_featured && (
-                                <Star className="w-3.5 h-3.5 fill-[var(--color-secondary)] text-[var(--color-secondary)]" />
-                              )}
-                            </div>
-                            {type.description && (
-                              <p className="text-xs text-[var(--color-text-muted)] line-clamp-1 max-w-xs">
-                                {type.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
+                      {children.length > 0 &&
+                        (isExpanded ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        ))}
+                    </button>
 
-                      {/* Code cell */}
-                      <td className="px-5 py-4">
-                        <code className="px-2 py-1 rounded bg-[var(--color-background-muted)] text-[11px] font-mono text-[var(--color-text-secondary)]">
-                          {type.code}
-                        </code>
-                      </td>
+                    <span className="w-10 h-10 shrink-0 rounded-[var(--radius-md)] bg-[var(--color-primary-light)] flex items-center justify-center">
+                      <ParentIcon className="w-5 h-5 text-[var(--color-primary)]" />
+                    </span>
 
-                      {/* Features cell */}
-                      <td className="px-5 py-4">
-                        <div className="flex flex-wrap gap-1 max-w-[260px]">
-                          {featureChips.length > 0 ? (
-                            featureChips.slice(0, 4).map((chip) => (
-                              <span
-                                key={chip}
-                                className="px-2 py-0.5 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary)] text-[10px] font-bold"
-                              >
-                                {chip}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-xs text-[var(--color-text-light)]">
-                              —
-                            </span>
-                          )}
-                          {featureChips.length > 4 && (
-                            <span className="px-2 py-0.5 rounded-full bg-[var(--color-background-muted)] text-[var(--color-text-muted)] text-[10px] font-bold">
-                              +{featureChips.length - 4}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Status cell */}
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                            type.is_active
-                              ? "bg-[var(--color-success-light)] text-[var(--color-success)]"
-                              : "bg-[var(--color-background-muted)] text-[var(--color-text-muted)]"
-                          }`}
-                        >
-                          {type.is_active ? (
-                            <Eye className="w-3 h-3" />
-                          ) : (
-                            <EyeOff className="w-3 h-3" />
-                          )}
-                          {type.is_active ? "Active" : "Inactive"}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-bold text-[var(--color-navy)]">
+                          {parent.name}
+                        </p>
+                        <span className="px-2 py-0.5 rounded-full bg-[var(--color-secondary-light)] text-[var(--color-secondary-dark)] text-[10px] font-bold">
+                          Parent
                         </span>
-                      </td>
+                        {children.length > 0 && (
+                          <span className="text-[10px] font-semibold text-[var(--color-text-muted)]">
+                            {children.length} child
+                            {children.length !== 1 ? "ren" : ""}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                        {parent.slug}
+                        {parent.description ? ` · ${parent.description}` : ""}
+                      </p>
+                    </div>
 
-                      {/* Actions */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-1">
-                          {/* Toggle active */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleActive(type)}
-                            disabled={isRowLoading}
-                            title={
-                              type.is_active
-                                ? "Deactivate"
-                                : "Activate"
-                            }
-                            className={`w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] transition-colors ${
-                              type.is_active
-                                ? "text-[var(--color-warning)] hover:bg-[var(--color-warning-light)]"
-                                : "text-[var(--color-success)] hover:bg-[var(--color-success-light)]"
-                            } disabled:opacity-50`}
-                          >
-                            {isRowLoading ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : type.is_active ? (
-                              <PowerOff className="w-4 h-4" />
-                            ) : (
-                              <Power className="w-4 h-4" />
-                            )}
-                          </button>
+                    <span
+                      className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        parent.is_active
+                          ? "bg-[var(--color-success-light)] text-[var(--color-success)]"
+                          : "bg-[var(--color-background-muted)] text-[var(--color-text-muted)]"
+                      }`}
+                    >
+                      {parent.is_active ? (
+                        <Eye className="w-3 h-3" />
+                      ) : (
+                        <EyeOff className="w-3 h-3" />
+                      )}
+                      {parent.is_active ? "Active" : "Inactive"}
+                    </span>
 
-                          {/* Edit */}
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(type)}
-                            title="Edit"
-                            className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                    <div className="shrink-0 flex items-center gap-1">
+                      {/* <button
+                        type="button"
+                        onClick={() => handleToggleActive(parent)}
+                        disabled={actionLoadingId === parent.id}
+                        title={parent.is_active ? "Deactivate" : "Activate"}
+                        className={`w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] transition-colors ${
+                          parent.is_active
+                            ? "text-[var(--color-warning)] hover:bg-[var(--color-warning-light)]"
+                            : "text-[var(--color-success)] hover:bg-[var(--color-success-light)]"
+                        } disabled:opacity-50`}
+                      >
+                        {actionLoadingId === parent.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : parent.is_active ? (
+                          <PowerOff className="w-4 h-4" />
+                        ) : (
+                          <Power className="w-4 h-4" />
+                        )}
+                      </button> */}
 
-                          {/* Delete */}
-                          <button
-                            type="button"
-                            onClick={() => setDeleteConfirmId(type.id)}
-                            title="Delete"
-                            className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] transition-colors"
+                      <button
+                        type="button"
+                        onClick={() => openCreateModal(parent.id)}
+                        title="Add child category"
+                        className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-navy)] hover:bg-[var(--color-background-muted)] transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(parent)}
+                        title="Edit"
+                        className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDeleteConfirm({
+                            id: parent.id,
+                            name: parent.name,
+                            isParent: true,
+                          })
+                        }
+                        title="Delete"
+                        className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Children */}
+                  {isExpanded && children.length > 0 && (
+                    <div className="bg-[var(--color-background-soft)]/50 border-t border-[var(--color-border-light)]">
+                      {children.map((child) => {
+                        const ChildIcon = ICON_MAP[child.icon] || Layers;
+                        return (
+                          <div
+                            key={child.id}
+                            className="flex items-center gap-3 pl-14 pr-5 py-3 border-b border-[var(--color-border-light)] last:border-0 hover:bg-[var(--color-background-soft)] transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                            <CornerDownRight className="w-3.5 h-3.5 text-[var(--color-text-light)] shrink-0" />
+                            <span className="w-8 h-8 shrink-0 rounded-[var(--radius-sm)] bg-white border border-[var(--color-border-light)] flex items-center justify-center">
+                              <ChildIcon className="w-4 h-4 text-[var(--color-primary)]" />
+                            </span>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-[var(--color-navy)]">
+                                {child.name}
+                              </p>
+                              <p className="text-[11px] text-[var(--color-text-muted)]">
+                                {child.slug}
+                              </p>
+                            </div>
+
+                            <span
+                              className={`shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                child.is_active
+                                  ? "bg-[var(--color-success-light)] text-[var(--color-success)]"
+                                  : "bg-[var(--color-background-muted)] text-[var(--color-text-muted)]"
+                              }`}
+                            >
+                              {child.is_active ? "Active" : "Inactive"}
+                            </span>
+
+                            <div className="shrink-0 flex items-center gap-1">
+                              {/* <button
+                                type="button"
+                                onClick={() => handleToggleActive(child)}
+                                disabled={actionLoadingId === child.id}
+                                className={`w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] transition-colors ${
+                                  child.is_active
+                                    ? "text-[var(--color-warning)] hover:bg-[var(--color-warning-light)]"
+                                    : "text-[var(--color-success)] hover:bg-[var(--color-success-light)]"
+                                } disabled:opacity-50`}
+                              >
+                                {actionLoadingId === child.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : child.is_active ? (
+                                  <PowerOff className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Power className="w-3.5 h-3.5" />
+                                )}
+                              </button> */}
+
+                              <button
+                                type="button"
+                                onClick={() => openEditModal(child)}
+                                className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setDeleteConfirm({
+                                    id: child.id,
+                                    name: child.name,
+                                    isParent: false,
+                                  })
+                                }
+                                className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* ---------- Orphan children (parent not in list) ---------- */}
+            {orphans.length > 0 && (
+              <div className="px-5 py-4 bg-[var(--color-warning-light)]/40 border-t border-[var(--color-warning)]/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="w-4 h-4 text-[var(--color-warning)]" />
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-warning)]">
+                    {orphans.length} uncategorized sub-categories
+                  </p>
+                </div>
+                <p className="text-[11px] text-[var(--color-text-muted)] mb-3">
+                  These sub-categories exist but their parent category is not
+                  loaded. This usually means the parent is on a different page
+                  or was deleted.
+                </p>
+                {orphans.map((child) => (
+                  <div
+                    key={`orphan-${child.id}`}
+                    className="flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] bg-white border border-[var(--color-border-light)] mb-2 last:mb-0"
+                  >
+                    <CornerDownRight className="w-3.5 h-3.5 text-[var(--color-text-light)] shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[var(--color-navy)]">
+                        {child.name}
+                      </p>
+                      <p className="text-[11px] text-[var(--color-text-muted)]">
+                        parent_id: {child.parent_id}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(child)}
+                      className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Footer count */}
+        {!loading && filtered.length > 0 && (
+          <div className="flex items-center justify-between px-5 py-4 border-t border-[var(--color-border-light)] bg-[var(--color-background-soft)]/40">
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Showing {filtered.length} of {meta.total} categories
+            </p>
+            <p className="text-[11px] text-[var(--color-text-light)]">
+              {parents.length} parent{parents.length !== 1 ? "s" : ""} ·{" "}
+              {childCount} child{childCount !== 1 ? "ren" : ""}
+            </p>
           </div>
         )}
       </div>
@@ -709,26 +868,27 @@ const ManagePropertyType = () => {
           ========================================================= */}
       {modalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-[var(--color-navy-dark)]/60 backdrop-blur-sm"
             onClick={closeModal}
           />
 
-          {/* Modal panel */}
           <div className="relative w-full max-w-lg bg-white rounded-[var(--radius-2xl)] shadow-[var(--shadow-xl)] overflow-hidden max-h-[90vh] flex flex-col">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border-light)] shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-[var(--color-navy)]">
                   {modalMode === "create"
-                    ? "Add Property Type"
-                    : "Edit Property Type"}
+                    ? isChildMode
+                      ? "Add Child Category"
+                      : "Add Parent Category"
+                    : "Edit Category"}
                 </h2>
                 <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                   {modalMode === "create"
-                    ? "Create a new category for listings."
-                    : "Update the details of this property type."}
+                    ? isChildMode
+                      ? "Create a subcategory under an existing parent."
+                      : "Create a top-level property category."
+                    : "Update the details of this category."}
                 </p>
               </div>
 
@@ -737,13 +897,11 @@ const ManagePropertyType = () => {
                 onClick={closeModal}
                 disabled={formSaving}
                 className="w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] hover:bg-[var(--color-background-soft)] hover:text-[var(--color-navy)] transition-colors disabled:opacity-50"
-                aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Body */}
             <form
               onSubmit={handleFormSubmit}
               className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4"
@@ -757,7 +915,64 @@ const ManagePropertyType = () => {
                 </div>
               )}
 
-              {/* Name */}
+              {modalMode === "create" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsChildMode(false);
+                      setField("parent_id", null);
+                    }}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-[var(--radius-md)] border-2 transition-all text-sm font-bold ${
+                      !isChildMode
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary-light)]/40 text-[var(--color-primary)]"
+                        : "border-[var(--color-border-light)] bg-white text-[var(--color-text-muted)] hover:border-[var(--color-primary)]/40"
+                    }`}
+                  >
+                    <FolderTree className="w-4 h-4" />
+                    Parent
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsChildMode(true)}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-[var(--radius-md)] border-2 transition-all text-sm font-bold ${
+                      isChildMode
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary-light)]/40 text-[var(--color-primary)]"
+                        : "border-[var(--color-border-light)] bg-white text-[var(--color-text-muted)] hover:border-[var(--color-primary)]/40"
+                    }`}
+                  >
+                    <CornerDownRight className="w-4 h-4" />
+                    Child
+                  </button>
+                </div>
+              )}
+
+              {isChildMode && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
+                    Parent Category{" "}
+                    <span className="text-[var(--color-danger)]">*</span>
+                  </label>
+                  <select
+                    value={form.parent_id || ""}
+                    onChange={(e) =>
+                      setField(
+                        "parent_id",
+                        e.target.value ? Number(e.target.value) : null
+                      )
+                    }
+                    className="w-full px-4 py-3 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background-soft)] focus:border-[var(--color-primary)] focus:bg-white transition-colors outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="">— Select parent —</option>
+                    {parentOptions.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
                   Name <span className="text-[var(--color-danger)]">*</span>
@@ -766,31 +981,13 @@ const ManagePropertyType = () => {
                   type="text"
                   value={form.name}
                   onChange={(e) => setField("name", e.target.value)}
-                  placeholder="e.g. Office Space"
+                  placeholder={
+                    isChildMode ? "e.g. Luxury Apartments" : "e.g. Commercial"
+                  }
                   className="w-full px-4 py-3 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background-soft)] focus:border-[var(--color-primary)] focus:bg-white transition-colors outline-none"
                 />
               </div>
 
-              {/* Code */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
-                  Code <span className="text-[var(--color-danger)]">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.code}
-                  onChange={(e) =>
-                    setField("code", e.target.value.toUpperCase())
-                  }
-                  placeholder="OFFICE_SPACE"
-                  className="w-full px-4 py-3 text-sm font-mono rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background-soft)] focus:border-[var(--color-primary)] focus:bg-white transition-colors outline-none"
-                />
-                <p className="mt-1 text-[11px] text-[var(--color-text-light)]">
-                  Unique identifier — uppercase letters and underscores only.
-                </p>
-              </div>
-
-              {/* Description */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
                   Description
@@ -799,70 +996,57 @@ const ManagePropertyType = () => {
                   rows={3}
                   value={form.description}
                   onChange={(e) => setField("description", e.target.value)}
-                  placeholder="Short description of this property type…"
+                  placeholder="Short description of this category…"
                   className="w-full px-4 py-3 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background-soft)] focus:border-[var(--color-primary)] focus:bg-white transition-colors resize-none outline-none"
                 />
               </div>
 
-              {/* Feature toggles */}
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-3">
-                  Supported Listing Types
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { key: "supports_sale", label: "Sale" },
-                    { key: "supports_rent", label: "Rent" },
-                    { key: "supports_lease", label: "Lease" },
-                    { key: "supports_area", label: "Area" },
-                  ].map(({ key, label }) => (
-                    <label
-                      key={key}
-                      className="flex items-center gap-2.5 p-3 rounded-[var(--radius-md)] border border-[var(--color-border-light)] bg-[var(--color-background-soft)] hover:border-[var(--color-primary)]/40 cursor-pointer transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form[key]}
-                        onChange={(e) => setField(key, e.target.checked)}
-                        className="w-4 h-4 accent-[var(--color-primary)] cursor-pointer"
-                      />
-                      <span className="text-sm font-semibold text-[var(--color-text)]">
-                        {label}
-                      </span>
-                    </label>
-                  ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
+                    Icon
+                  </label>
+                  <select
+                    value={form.icon}
+                    onChange={(e) => setField("icon", e.target.value)}
+                    className="w-full px-4 py-3 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background-soft)] focus:border-[var(--color-primary)] focus:bg-white transition-colors outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="">— None —</option>
+                    <option value="house">House</option>
+                    <option value="building-2">Building</option>
+                    <option value="building">Building (alt)</option>
+                    <option value="store">Store</option>
+                    <option value="map">Map</option>
+                    <option value="bed">Bed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
+                    Sort Order
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.sort_order}
+                    onChange={(e) => setField("sort_order", e.target.value)}
+                    className="w-full px-4 py-3 text-sm rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-background-soft)] focus:border-[var(--color-primary)] focus:bg-white transition-colors outline-none"
+                  />
                 </div>
               </div>
 
-              {/* Status toggles */}
-              <div className="grid grid-cols-2 gap-2">
-                <label className="flex items-center gap-2.5 p-3 rounded-[var(--radius-md)] border border-[var(--color-border-light)] bg-[var(--color-background-soft)] hover:border-[var(--color-primary)]/40 cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={form.is_active}
-                    onChange={(e) => setField("is_active", e.target.checked)}
-                    className="w-4 h-4 accent-[var(--color-primary)] cursor-pointer"
-                  />
-                  <span className="text-sm font-semibold text-[var(--color-text)]">
-                    Active
-                  </span>
-                </label>
-                <label className="flex items-center gap-2.5 p-3 rounded-[var(--radius-md)] border border-[var(--color-border-light)] bg-[var(--color-background-soft)] hover:border-[var(--color-primary)]/40 cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={form.is_featured}
-                    onChange={(e) =>
-                      setField("is_featured", e.target.checked)
-                    }
-                    className="w-4 h-4 accent-[var(--color-primary)] cursor-pointer"
-                  />
-                  <span className="text-sm font-semibold text-[var(--color-text)]">
-                    Featured
-                  </span>
-                </label>
-              </div>
+              <label className="flex items-center gap-2.5 p-3 rounded-[var(--radius-md)] border border-[var(--color-border-light)] bg-[var(--color-background-soft)] hover:border-[var(--color-primary)]/40 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={form.is_active}
+                  onChange={(e) => setField("is_active", e.target.checked)}
+                  className="w-4 h-4 accent-[var(--color-primary)] cursor-pointer"
+                />
+                <span className="text-sm font-semibold text-[var(--color-text)]">
+                  Active
+                </span>
+              </label>
 
-              {/* Footer buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--color-border-light)]">
                 <button
                   type="button"
@@ -896,13 +1080,13 @@ const ManagePropertyType = () => {
       )}
 
       {/* =========================================================
-          DELETE CONFIRMATION MODAL
+          DELETE CONFIRMATION
           ========================================================= */}
-      {deleteConfirmId && (
+      {deleteConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-[var(--color-navy-dark)]/60 backdrop-blur-sm"
-            onClick={() => !deleting && setDeleteConfirmId(null)}
+            onClick={() => !deleting && setDeleteConfirm(null)}
           />
           <div className="relative w-full max-w-sm bg-white rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)] p-6">
             <div className="flex items-start gap-4">
@@ -911,11 +1095,17 @@ const ManagePropertyType = () => {
               </span>
               <div>
                 <h3 className="text-lg font-bold text-[var(--color-navy)]">
-                  Delete Property Type?
+                  Delete Category?
                 </h3>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                  This action cannot be undone. Any listings attached to this
-                  type may be affected.
+                  You're about to delete{" "}
+                  <span className="font-semibold text-[var(--color-navy)]">
+                    "{deleteConfirm.name}"
+                  </span>
+                  .{deleteConfirm.isParent && (
+                    <> Any child categories under it may also be affected.</>
+                  )}{" "}
+                  This action cannot be undone.
                 </p>
               </div>
             </div>
@@ -923,7 +1113,7 @@ const ManagePropertyType = () => {
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
                 type="button"
-                onClick={() => setDeleteConfirmId(null)}
+                onClick={() => setDeleteConfirm(null)}
                 disabled={deleting}
                 className="px-5 py-2.5 text-sm font-bold rounded-[var(--radius-md)] text-[var(--color-navy)] border border-[var(--color-border)] hover:border-[var(--color-navy)] transition-colors disabled:opacity-50"
               >

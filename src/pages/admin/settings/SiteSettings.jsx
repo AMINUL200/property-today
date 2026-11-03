@@ -21,7 +21,6 @@ import {
   X,
 } from "lucide-react";
 import { api } from "../../../service/api";
-// import { api } from "../../service/api";
 
 /* =========================================================
    SITE SETTINGS PAGE
@@ -34,6 +33,7 @@ const SiteSettings = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const storageUrl = import.meta.env.VITE_API_STORAGE_URL || "";
 
   // ---------- Form state, mirrors API structure ----------
   const [form, setForm] = useState({
@@ -59,13 +59,15 @@ const SiteSettings = () => {
       linkedin: "",
       youtube: "",
     },
+    branding: {
+      logo_alt: "",
+    },
   });
 
   // ---------- File state (multipart upload) ----------
   const [files, setFiles] = useState({
     logo_web: null,
     logo_mobile: null,
-    logo_alt: null,
     favicon: null,
     image_web: null,
     image_mobile: null,
@@ -76,7 +78,6 @@ const SiteSettings = () => {
   const [previews, setPreviews] = useState({
     logo_web: null,
     logo_mobile: null,
-    logo_alt: null,
     favicon: null,
     image_web: null,
     image_mobile: null,
@@ -89,64 +90,66 @@ const SiteSettings = () => {
   /* =========================================================
      FETCH SETTINGS ON MOUNT
      ========================================================= */
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await api.get("/website-settings");
-        const data = res?.data?.data;
+  const fetchSettings = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await api.get("/website-settings");
+      const data = res?.data?.data;
 
-        if (!data) {
-          setError("Unexpected response from server.");
-          return;
-        }
-
-        // Map response → form
-        setForm({
-          company: {
-            name: data.company?.name || "",
-            email: data.company?.email || "",
-            phone: data.company?.phone || "",
-            address: data.company?.address || "",
-          },
-          website: {
-            name: data.website?.name || "",
-            url: data.website?.url || "",
-            tagline: data.website?.tagline || "",
-          },
-          seo: {
-            meta_title: data.seo?.meta_title || "",
-            meta_description: data.seo?.meta_description || "",
-            meta_keywords: data.seo?.meta_keywords || "",
-          },
-          social: {
-            facebook: data.social?.facebook || "",
-            instagram: data.social?.instagram || "",
-            linkedin: data.social?.linkedin || "",
-            youtube: data.social?.youtube || "",
-          },
-        });
-
-        // Existing image URLs → show as previews
-        setPreviews({
-          logo_web: data.branding?.logo_web || null,
-          logo_mobile: data.branding?.logo_mobile || null,
-          logo_alt: data.branding?.logo_alt || null,
-          favicon: data.branding?.favicon || null,
-          image_web: data.social_sharing?.image_web || null,
-          image_mobile: data.social_sharing?.image_mobile || null,
-          image_alt: data.social_sharing?.image_alt || null,
-        });
-      } catch (err) {
-        setError(
-          err?.message || "Failed to load website settings. Please try again."
-        );
-      } finally {
-        setLoading(false);
+      if (!data) {
+        setError("Unexpected response from server.");
+        return;
       }
-    };
 
+      // Map response → form
+      setForm({
+        company: {
+          name: data.company?.name || "",
+          email: data.company?.email || "",
+          phone: data.company?.phone || "",
+          address: data.company?.address || "",
+        },
+        website: {
+          name: data.website?.name || "",
+          url: data.website?.url || "",
+          tagline: data.website?.tagline || "",
+        },
+        seo: {
+          meta_title: data.seo?.meta_title || "",
+          meta_description: data.seo?.meta_description || "",
+          meta_keywords: data.seo?.meta_keywords || "",
+        },
+        social: {
+          facebook: data.social?.facebook || "",
+          instagram: data.social?.instagram || "",
+          linkedin: data.social?.linkedin || "",
+          youtube: data.social?.youtube || "",
+        },
+        branding: {
+          logo_alt: data.branding?.logo_alt || "",
+        },
+      });
+
+      // Existing image URLs → show as previews
+      setPreviews({
+        logo_web: data.branding?.logo_web || null,
+        logo_mobile: data.branding?.logo_mobile || null,
+        favicon: data.branding?.favicon || null,
+        image_web: data.social_sharing?.image_web || null,
+        image_mobile: data.social_sharing?.image_mobile || null,
+        image_alt: data.social_sharing?.image_alt || null,
+      });
+    } catch (err) {
+      setError(
+        err?.message || "Failed to load website settings. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchSettings();
   }, []);
 
@@ -191,30 +194,33 @@ const SiteSettings = () => {
     setSuccess("");
 
     try {
-      // Build FormData in the Laravel-friendly nested format
+      // Build FormData in the Laravel-friendly format
       const fd = new FormData();
 
       // Company
-      fd.append("company[name]", form.company.name);
-      fd.append("company[email]", form.company.email);
-      fd.append("company[phone]", form.company.phone);
-      fd.append("company[address]", form.company.address);
+      fd.append("company_name", form.company.name);
+      fd.append("company_email", form.company.email);
+      fd.append("company_phone", form.company.phone);
+      fd.append("company_address", form.company.address);
 
       // Website
-      fd.append("website[name]", form.website.name);
-      fd.append("website[url]", form.website.url);
-      fd.append("website[tagline]", form.website.tagline);
+      fd.append("website_name", form.website.name);
+      fd.append("website_url", form.website.url);
+      fd.append("tagline", form.website.tagline);
 
       // SEO
-      fd.append("seo[meta_title]", form.seo.meta_title);
-      fd.append("seo[meta_description]", form.seo.meta_description);
-      fd.append("seo[meta_keywords]", form.seo.meta_keywords);
+      fd.append("meta_title", form.seo.meta_title);
+      fd.append("meta_description", form.seo.meta_description);
+      fd.append("meta_keywords", form.seo.meta_keywords);
 
       // Social
-      fd.append("social[facebook]", form.social.facebook);
-      fd.append("social[instagram]", form.social.instagram);
-      fd.append("social[linkedin]", form.social.linkedin);
-      fd.append("social[youtube]", form.social.youtube);
+      fd.append("facebook_url", form.social.facebook);
+      fd.append("instagram_url", form.social.instagram);
+      fd.append("linkedin_url", form.social.linkedin);
+      fd.append("youtube_url", form.social.youtube);
+
+      // Branding — logo_alt is a text field, not a file
+      fd.append("logo_alt", form.branding.logo_alt);
 
       // Files (only append if user picked a new file)
       Object.entries(files).forEach(([key, file]) => {
@@ -224,7 +230,7 @@ const SiteSettings = () => {
       });
 
       // Laravel requires _method spoofing for PUT with multipart
-      fd.append("_method", "PUT");
+      // fd.append("_method", "PUT");
 
       const res = await api.post("/admin/website-settings", fd);
 
@@ -233,34 +239,20 @@ const SiteSettings = () => {
         throw { message: payload?.message || "Failed to update settings." };
       }
 
-      setSuccess(
-        payload?.message || "Website settings updated successfully."
-      );
+      setSuccess(payload?.message || "Website settings updated successfully.");
 
-      // Refresh previews from updated response if provided
-      if (payload?.data) {
-        const d = payload.data;
-        setPreviews({
-          logo_web: d.branding?.logo_web || previews.logo_web,
-          logo_mobile: d.branding?.logo_mobile || previews.logo_mobile,
-          logo_alt: d.branding?.logo_alt || previews.logo_alt,
-          favicon: d.branding?.favicon || previews.favicon,
-          image_web: d.social_sharing?.image_web || previews.image_web,
-          image_mobile:
-            d.social_sharing?.image_mobile || previews.image_mobile,
-          image_alt: d.social_sharing?.image_alt || previews.image_alt,
-        });
-        // Clear uploaded file references after successful save
-        setFiles({
-          logo_web: null,
-          logo_mobile: null,
-          logo_alt: null,
-          favicon: null,
-          image_web: null,
-          image_mobile: null,
-          image_alt: null,
-        });
-      }
+      // Clear uploaded file references after successful save
+      setFiles({
+        logo_web: null,
+        logo_mobile: null,
+        favicon: null,
+        image_web: null,
+        image_mobile: null,
+        image_alt: null,
+      });
+
+      // Refresh from server so previews reflect the actual saved URLs
+      fetchSettings();
     } catch (err) {
       let message =
         err?.message ||
@@ -282,9 +274,8 @@ const SiteSettings = () => {
   };
 
   /* =========================================================
-     UI
+     LOADING STATE
      ========================================================= */
-
   if (loading) {
     return (
       <div className="w-full min-h-[60vh] flex items-center justify-center">
@@ -298,6 +289,9 @@ const SiteSettings = () => {
     );
   }
 
+  /* =========================================================
+     UI
+     ========================================================= */
   return (
     <div className="w-full">
       {/* Header */}
@@ -307,8 +301,7 @@ const SiteSettings = () => {
             Site Settings
           </h1>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Manage your website's brand, contact details, SEO, and social
-            links.
+            Manage your website's brand, contact details, SEO, and social links.
           </p>
         </div>
       </div>
@@ -406,18 +399,21 @@ const SiteSettings = () => {
         </Section>
 
         {/* =========================================================
-            BRANDING — LOGOS + FAVICON
+            BRANDING — LOGOS + FAVICON + LOGO ALT TEXT
             ========================================================= */}
         <Section
           icon={Palette}
           title="Branding"
           subtitle="Upload logos and favicon. Recommended: PNG with transparent background."
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Image tiles */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <ImageUpload
               label="Website Logo"
               field="logo_web"
-              preview={previews.logo_web}
+              preview={
+                previews.logo_web ? `${storageUrl}${previews.logo_web}` : null
+              }
               onUpload={handleFile}
               onRemove={removeFile}
               inputRefs={inputRefs}
@@ -427,7 +423,11 @@ const SiteSettings = () => {
             <ImageUpload
               label="Mobile Logo"
               field="logo_mobile"
-              preview={previews.logo_mobile}
+              preview={
+                previews.logo_mobile
+                  ? `${storageUrl}${previews.logo_mobile}`
+                  : null
+              }
               onUpload={handleFile}
               onRemove={removeFile}
               inputRefs={inputRefs}
@@ -435,25 +435,32 @@ const SiteSettings = () => {
               recommended="80×80 · PNG"
             />
             <ImageUpload
-              label="Logo Alt / Text"
-              field="logo_alt"
-              preview={previews.logo_alt}
-              onUpload={handleFile}
-              onRemove={removeFile}
-              inputRefs={inputRefs}
-              aspect="square"
-              recommended="Small logo · PNG"
-            />
-            <ImageUpload
               label="Favicon"
               field="favicon"
-              preview={previews.favicon}
+              preview={
+                previews.favicon ? `${storageUrl}${previews.favicon}` : null
+              }
               onUpload={handleFile}
               onRemove={removeFile}
               inputRefs={inputRefs}
               aspect="square"
               recommended="32×32 · PNG"
             />
+          </div>
+
+          {/* Logo Alt Text — text input, full width */}
+          <div className="mt-5">
+            <Field
+              label="Logo Alt Text"
+              value={form.branding.logo_alt}
+              onChange={(v) => setField("branding", "logo_alt", v)}
+              placeholder="Propertytoday — Real Estate"
+              maxLength={120}
+            />
+            <p className="mt-1 text-[11px] text-[var(--color-text-light)]">
+              Used by screen readers and search engines. Keep it short and
+              descriptive.
+            </p>
           </div>
         </Section>
 
@@ -540,47 +547,7 @@ const SiteSettings = () => {
           </div>
         </Section>
 
-        {/* =========================================================
-            SOCIAL SHARING IMAGES
-            ========================================================= */}
-        <Section
-          icon={ImageIcon}
-          title="Social Sharing Images"
-          subtitle="Open Graph images shown when your site is shared on social platforms."
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <ImageUpload
-              label="Desktop Image"
-              field="image_web"
-              preview={previews.image_web}
-              onUpload={handleFile}
-              onRemove={removeFile}
-              inputRefs={inputRefs}
-              aspect="wide"
-              recommended="1200×630 · JPG"
-            />
-            <ImageUpload
-              label="Mobile Image"
-              field="image_mobile"
-              preview={previews.image_mobile}
-              onUpload={handleFile}
-              onRemove={removeFile}
-              inputRefs={inputRefs}
-              aspect="wide"
-              recommended="600×600 · JPG"
-            />
-            <ImageUpload
-              label="Alt / Share Logo"
-              field="image_alt"
-              preview={previews.image_alt}
-              onUpload={handleFile}
-              onRemove={removeFile}
-              inputRefs={inputRefs}
-              aspect="wide"
-              recommended="800×800 · JPG"
-            />
-          </div>
-        </Section>
+       
 
         {/* =========================================================
             SUBMIT
@@ -627,9 +594,7 @@ const Section = ({ icon: Icon, title, subtitle, children }) => (
         <Icon className="w-5 h-5 text-[var(--color-primary)]" />
       </span>
       <div className="min-w-0">
-        <h2 className="text-base font-bold text-[var(--color-navy)]">
-          {title}
-        </h2>
+        <h2 className="text-base font-bold text-[var(--color-navy)]">{title}</h2>
         {subtitle && (
           <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
             {subtitle}
@@ -705,8 +670,7 @@ const ImageUpload = ({
   aspect = "square",
   recommended,
 }) => {
-  const aspectClass =
-    aspect === "wide" ? "aspect-[4/3]" : "aspect-square";
+  const aspectClass = aspect === "wide" ? "aspect-[4/3]" : "aspect-square";
 
   return (
     <div>

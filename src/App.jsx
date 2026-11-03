@@ -23,6 +23,8 @@ import AgentDashboard from "./pages/agent/AgentDashboard";
 import AgentProfile from "./pages/agent/AgentProfile";
 import ProtectedRoute from "./service/ProtectedRoute";
 import ManagePropertyType from "./pages/admin/property/ManagePropertyType";
+import ManagePropertyMenu from "./pages/admin/property/ManagePropertyMenu";
+import ManageMyProperty from "./pages/agent/property/ManageMyProperty";
 
 const App = () => {
   return (
@@ -63,7 +65,9 @@ const App = () => {
         >
           <Route index element={<AgentDashboard />} />
           <Route path="profile" element={<AgentProfile />} />
+          <Route path="manage-property" element={<ManageMyProperty />} />
           {/* Add more agent routes here as you build them */}
+          {/*  */}
         </Route>
 
         {/* Admin Layout */}
@@ -81,7 +85,8 @@ const App = () => {
           <Route path="profile" element={<AdminProfile />} />
 
           {/* Manage Property routes  */}
-          <Route path="properties/types" element={<ManagePropertyType />} />
+          <Route path="properties/categories" element={<ManagePropertyType />} />
+          <Route path="properties/categories/menu" element={<ManagePropertyMenu />} />
 
           
         </Route>

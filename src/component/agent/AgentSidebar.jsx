@@ -49,29 +49,12 @@ const AgentSidebar = ({ isOpen, setIsOpen }) => {
       icon: <Building2 className="w-5 h-5" />,
       children: [
         {
-          id: "all-listings",
-          label: "All Listings",
+          id: "manage-property",
+          label: "Manage  Properties",
           icon: <Building2 className="w-4 h-4" />,
-          path: "/agent/listings/all",
+          path: "/agent/manage-property",
         },
-        {
-          id: "active-listings",
-          label: "Active",
-          icon: <BadgeCheck className="w-4 h-4" />,
-          path: "/agent/listings/active",
-        },
-        {
-          id: "pending-listings",
-          label: "Pending Review",
-          icon: <FileText className="w-4 h-4" />,
-          path: "/agent/listings/pending",
-        },
-        {
-          id: "sold-listings",
-          label: "Sold / Rented",
-          icon: <HandCoins className="w-4 h-4" />,
-          path: "/agent/listings/sold",
-        },
+      
       ],
     },
     {
