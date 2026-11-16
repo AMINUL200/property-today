@@ -131,7 +131,8 @@ const Footer = () => {
             {/* Logo */}
             <div className="flex items-center">
               <img
-                src="/image/Footer_logo.png"
+                // src="/image/Footer_logo.png"
+                src="/image/logo2.jpeg"
                 alt="Propertytoday"
                 className="w-[220px] h-auto object-contain object-left"
               />

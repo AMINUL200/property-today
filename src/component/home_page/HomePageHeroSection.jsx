@@ -18,7 +18,8 @@ import {
 
 /* =========================================================
    PLACEHOLDER IMAGERY
-   ========================================================= */
+========================================================= */
+
 const POOL = [
   "https://picsum.photos/seed/ptoday-living/560/720",
   "https://picsum.photos/seed/ptoday-tower/560/680",
@@ -30,19 +31,23 @@ const POOL = [
   "https://picsum.photos/seed/ptoday-poolside/560/680",
   "https://picsum.photos/seed/ptoday-terrace/560/720",
 ];
+
 const POOL_SIZE = POOL.length;
 const MAX_MAG = Math.floor(POOL_SIZE / 2);
 
 const arcDelta = (i, slide, n) => {
   let d = (i - slide) % n;
+
   if (d > n / 2) d -= n;
   if (d < -n / 2) d += n;
+
   return d;
 };
 
 const arcTransform = (d) => {
   const mag = Math.abs(d);
   const side = Math.sign(d);
+
   return {
     x: `${side * (10 + (mag - 1) * 9)}vw`,
     y: `${(mag - 1) * 1.9}vw`,
@@ -54,32 +59,111 @@ const arcTransform = (d) => {
   };
 };
 
+/* =========================================================
+   SEARCH DATA
+========================================================= */
+
 const SEARCH_TABS = ["Buy", "Rent", "Commercial", "Land & Plots"];
 
-const CITIES = ["Select City", "Delhi", "Mumbai", "Kolkata", "Bangalore", "Chennai", "Hyderabad", "Pune"];
-const PROPERTY_TYPES = ["Property Type", "Apartment", "Villa", "Independent House", "Office", "Shop", "Warehouse", "Plot"];
-const BUDGETS = ["Budget", "Under \u20b950 Lakh", "\u20b950 Lakh \u2013 1 Cr", "\u20b91 Cr \u2013 2 Cr", "\u20b92 Cr+"];
-
-const POPULAR_LOCATIONS = ["Delhi", "Mumbai", "Kolkata", "Bangalore", "Chennai", "Hyderabad"];
-
-const QUICK_LINKS = [
-  { label: "Residential\nProperties", icon: Home, color: "var(--color-residential)" },
-  { label: "Commercial\nProperties", icon: Building, color: "var(--color-secondary-dark)" },
-  { label: "Land & Plots", icon: Trees, color: "var(--color-land)" },
-  { label: "Buy / Sell\nServices", icon: KeyRound, color: "var(--color-rental)" },
-  { label: "Property\nVerification", icon: ShieldCheck, color: "var(--color-investment)" },
-  { label: "Home Loan\nAssistance", icon: Landmark, color: "var(--color-warning)" },
+const CITIES = [
+  "Select City",
+  "Delhi",
+  "Mumbai",
+  "Kolkata",
+  "Bangalore",
+  "Chennai",
+  "Hyderabad",
+  "Pune",
 ];
 
-/* ---------- Filter Dropdown ---------- */
-const FilterDropdown = ({ icon: Icon, options, value, onChange, isOpen, onToggle }) => {
+const PROPERTY_TYPES = [
+  "Property Type",
+  "Apartment",
+  "Villa",
+  "Independent House",
+  "Office",
+  "Shop",
+  "Warehouse",
+  "Plot",
+];
+
+const BUDGETS = [
+  "Budget",
+  "Under ₹50 Lakh",
+  "₹50 Lakh – 1 Cr",
+  "₹1 Cr – 2 Cr",
+  "₹2 Cr+",
+];
+
+const POPULAR_LOCATIONS = [
+  "Delhi",
+  "Mumbai",
+  "Kolkata",
+  "Bangalore",
+  "Chennai",
+  "Hyderabad",
+];
+
+/* =========================================================
+   QUICK LINKS
+========================================================= */
+
+const QUICK_LINKS = [
+  {
+    label: "Residential\nProperties",
+    icon: Home,
+    color: "var(--color-residential)",
+  },
+  {
+    label: "Commercial\nProperties",
+    icon: Building,
+    color: "var(--color-secondary-dark)",
+  },
+  {
+    label: "Land & Plots",
+    icon: Trees,
+    color: "var(--color-land)",
+  },
+  {
+    label: "Buy / Sell\nServices",
+    icon: KeyRound,
+    color: "var(--color-rental)",
+  },
+  {
+    label: "Property\nVerification",
+    icon: ShieldCheck,
+    color: "var(--color-investment)",
+  },
+  {
+    label: "Home Loan\nAssistance",
+    icon: Landmark,
+    color: "var(--color-warning)",
+  },
+];
+
+/* =========================================================
+   FILTER DROPDOWN COMPONENT
+========================================================= */
+
+const FilterDropdown = ({
+  icon: Icon,
+  options,
+  value,
+  onChange,
+  isOpen,
+  onToggle,
+}) => {
   const ref = useRef(null);
 
   useEffect(() => {
     const handleClick = (e) => {
-      if (isOpen && ref.current && !ref.current.contains(e.target)) onToggle(false);
+      if (isOpen && ref.current && !ref.current.contains(e.target)) {
+        onToggle(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClick);
+
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen, onToggle]);
 
@@ -91,7 +175,9 @@ const FilterDropdown = ({ icon: Icon, options, value, onChange, isOpen, onToggle
         className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-background-soft)] transition-colors duration-150"
       >
         <Icon className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" />
+
         <span className="truncate">{value}</span>
+
         <ChevronDown
           className={`w-4 h-4 ml-auto text-[var(--color-text-muted)] transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -128,6 +214,10 @@ const FilterDropdown = ({ icon: Icon, options, value, onChange, isOpen, onToggle
   );
 };
 
+/* =========================================================
+   HOME PAGE HERO SECTION
+========================================================= */
+
 const HomePageHeroSection = () => {
   const [activeTab, setActiveTab] = useState("Buy");
   const [city, setCity] = useState(CITIES[0]);
@@ -136,16 +226,30 @@ const HomePageHeroSection = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [activeCity, setActiveCity] = useState("Kolkata");
   const [slide, setSlide] = useState(0);
+
   const prefersReducedMotion = useReducedMotion();
+
+  /* Automatic slider */
 
   useEffect(() => {
     if (prefersReducedMotion) return;
-    const id = setInterval(() => setSlide((s) => (s + 1) % POOL_SIZE), 3200);
+
+    const id = setInterval(() => {
+      setSlide((s) => (s + 1) % POOL_SIZE);
+    }, 3200);
+
     return () => clearInterval(id);
   }, [prefersReducedMotion]);
 
-  const prevSlide = () => setSlide((s) => (s - 1 + POOL_SIZE) % POOL_SIZE);
-  const nextSlide = () => setSlide((s) => (s + 1) % POOL_SIZE);
+  const prevSlide = () => {
+    setSlide((s) => (s - 1 + POOL_SIZE) % POOL_SIZE);
+  };
+
+  const nextSlide = () => {
+    setSlide((s) => (s + 1) % POOL_SIZE);
+  };
+
+  /* Carousel images */
 
   const arcImages = useMemo(
     () =>
@@ -153,22 +257,44 @@ const HomePageHeroSection = () => {
         src,
         key: i,
         delta: arcDelta(i, slide, POOL_SIZE),
-      })).filter((img) => img.delta !== 0 && Math.abs(img.delta) <= MAX_MAG),
+      })).filter(
+        (img) => img.delta !== 0 && Math.abs(img.delta) <= MAX_MAG
+      ),
     [slide]
   );
 
+  /* Animations */
+
   const containerVariants = {
     hidden: {},
-    show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } },
+    show: {
+      transition: {
+        staggerChildren: 0.09,
+        delayChildren: 0.1,
+      },
+    },
   };
+
   const itemVariants = {
-    hidden: { opacity: 0, y: 18 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+    hidden: {
+      opacity: 0,
+      y: 18,
+    },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
   };
 
   return (
     <section className="relative bg-[var(--color-background-soft)]">
-      {/* Ambient brand wash */}
+
+      {/* Ambient brand background */}
+
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -177,20 +303,33 @@ const HomePageHeroSection = () => {
         }}
       />
 
-      {/* ---------- Curved carousel ---------- */}
-      <div className="hidden xl:block absolute inset-0 overflow-hidden" style={{ perspective: 1800 }}>
+      {/* =====================================================
+          CURVED IMAGE CAROUSEL
+      ===================================================== */}
+
+      <div
+        className="hidden xl:block absolute inset-0 overflow-hidden"
+        style={{ perspective: 1800 }}
+      >
         <div className="relative w-full h-full">
+
           {arcImages.map(({ src, key, delta }) => {
             const t = arcTransform(delta);
             const mag = Math.abs(delta);
             const h = 240 + (MAX_MAG - mag) * 42;
+
             return (
               <motion.img
                 key={key}
                 src={src}
                 alt=""
-                className="absolute top-1/2 left-1/2 w-44 object-cover rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]"
-                style={{ height: h, marginTop: -h / 2, marginLeft: -88, transformStyle: "preserve-3d" }}
+                className="absolute top-[56%] left-1/2 w-44 object-cover rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]"
+                style={{
+                  height: h,
+                  marginTop: -h / 2,
+                  marginLeft: -88,
+                  transformStyle: "preserve-3d",
+                }}
                 animate={{
                   x: t.x,
                   y: t.y,
@@ -203,13 +342,21 @@ const HomePageHeroSection = () => {
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
-                    : { type: "spring", stiffness: 110, damping: 20, mass: 0.9 }
+                    : {
+                        type: "spring",
+                        stiffness: 110,
+                        damping: 20,
+                        mass: 0.9,
+                      }
                 }
               />
             );
           })}
+
         </div>
       </div>
+
+      {/* Previous button */}
 
       <button
         type="button"
@@ -220,6 +367,8 @@ const HomePageHeroSection = () => {
         <ChevronLeft className="w-5 h-5" />
       </button>
 
+      {/* Next button */}
+
       <button
         type="button"
         onClick={nextSlide}
@@ -229,32 +378,33 @@ const HomePageHeroSection = () => {
         <ChevronRight className="w-5 h-5" />
       </button>
 
-      {/* ---------- Main content ---------- */}
+      {/* =====================================================
+          MAIN HERO CONTENT
+      ===================================================== */}
+
       <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 pt-32 pb-16 lg:pt-40 lg:pb-20">
+
         <div className="relative flex items-center justify-center">
+
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="relative z-10 w-full max-w-[820px] text-center"
+            className="relative z-10 w-full max-w-[960px] text-center"
           >
+
+            {/* Main heading - no visible border */}
+
             <motion.h1
               variants={itemVariants}
-              className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text)]"
-            >
-              Your Next Move,{" "}
-              <span className="text-[var(--color-secondary-dark)]">Today</span>
-            </motion.h1>
-
-            <motion.p
-              variants={itemVariants}
-              className="mt-4 text-base sm:text-lg text-[var(--color-text-muted)] max-w-md mx-auto"
+              className="font-serif text-2xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-[var(--color-text)] w-full max-w-[960px] mx-auto text-center -mt-10"
             >
               Find the perfect property for living, business or investment
               across India.
-            </motion.p>
+            </motion.h1>
 
             {/* Search tabs */}
+
             <motion.div
               variants={itemVariants}
               className="mt-8 flex items-center justify-center gap-2 flex-wrap"
@@ -275,35 +425,46 @@ const HomePageHeroSection = () => {
               ))}
             </motion.div>
 
-            {/* Search bar — z-index raised so dropdowns float above the category strip */}
+            {/* Search bar */}
+
             <motion.div
               variants={itemVariants}
               className="relative z-30 mt-4 bg-white rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)] border border-[var(--color-border-light)] flex flex-col sm:flex-row items-stretch divide-y sm:divide-y-0 sm:divide-x divide-[var(--color-border-light)]"
             >
+
               <FilterDropdown
                 icon={MapPin}
                 options={CITIES}
                 value={city}
                 onChange={setCity}
                 isOpen={openDropdown === "city"}
-                onToggle={(open) => setOpenDropdown(open ? "city" : null)}
+                onToggle={(open) =>
+                  setOpenDropdown(open ? "city" : null)
+                }
               />
+
               <FilterDropdown
                 icon={Building2}
                 options={PROPERTY_TYPES}
                 value={propertyType}
                 onChange={setPropertyType}
                 isOpen={openDropdown === "type"}
-                onToggle={(open) => setOpenDropdown(open ? "type" : null)}
+                onToggle={(open) =>
+                  setOpenDropdown(open ? "type" : null)
+                }
               />
+
               <FilterDropdown
                 icon={IndianRupee}
                 options={BUDGETS}
                 value={budget}
                 onChange={setBudget}
                 isOpen={openDropdown === "budget"}
-                onToggle={(open) => setOpenDropdown(open ? "budget" : null)}
+                onToggle={(open) =>
+                  setOpenDropdown(open ? "budget" : null)
+                }
               />
+
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] transition-colors duration-200 whitespace-nowrap rounded-b-[var(--radius-xl)] sm:rounded-b-none sm:rounded-r-[var(--radius-xl)]"
@@ -311,14 +472,19 @@ const HomePageHeroSection = () => {
                 <Search className="w-4 h-4" />
                 Search Properties
               </button>
+
             </motion.div>
 
             {/* Popular locations */}
+
             <motion.div
               variants={itemVariants}
               className="mt-6 flex items-center justify-center gap-2 flex-wrap text-sm"
             >
-              <span className="font-semibold text-[var(--color-text)]">Popular Locations:</span>
+              <span className="font-semibold text-[var(--color-text)]">
+                Popular Locations:
+              </span>
+
               {POPULAR_LOCATIONS.map((loc) => (
                 <button
                   key={loc}
@@ -335,8 +501,12 @@ const HomePageHeroSection = () => {
               ))}
             </motion.div>
 
-            {/* Slide dots */}
-            <motion.div variants={itemVariants} className="mt-8 flex items-center justify-center gap-2">
+            {/* Slider dots */}
+
+            <motion.div
+              variants={itemVariants}
+              className="mt-8 flex items-center justify-center gap-2"
+            >
               {POOL.map((_, i) => (
                 <button
                   key={i}
@@ -344,15 +514,21 @@ const HomePageHeroSection = () => {
                   aria-label={`Rotate to image ${i + 1}`}
                   onClick={() => setSlide(i)}
                   className={`h-2 rounded-full transition-all duration-300 ${
-                    i === slide ? "w-6 bg-[var(--color-primary)]" : "w-2 bg-[var(--color-border-dark)]"
+                    i === slide
+                      ? "w-6 bg-[var(--color-primary)]"
+                      : "w-2 bg-[var(--color-border-dark)]"
                   }`}
                 />
               ))}
             </motion.div>
+
           </motion.div>
         </div>
 
-        {/* ---------- Quick category strip ---------- */}
+        {/* =====================================================
+            QUICK CATEGORY STRIP
+        ===================================================== */}
+
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -360,6 +536,7 @@ const HomePageHeroSection = () => {
           transition={{ duration: 0.5 }}
           className="relative z-20 mt-16 lg:mt-20 bg-white rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] border border-[var(--color-border-light)] px-6 sm:px-8 py-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8"
         >
+
           {QUICK_LINKS.map(({ label, icon: Icon, color }) => (
             <button
               key={label}
@@ -372,12 +549,15 @@ const HomePageHeroSection = () => {
               >
                 <Icon className="w-5 h-5 text-white" />
               </span>
+
               <span className="text-sm font-semibold text-[var(--color-navy)] whitespace-pre-line leading-snug">
                 {label}
               </span>
             </button>
           ))}
+
         </motion.div>
+
       </div>
     </section>
   );

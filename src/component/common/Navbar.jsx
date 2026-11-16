@@ -502,7 +502,8 @@ const Navbar = ({ toggleMenu }) => {
           className="flex items-center cursor-pointer select-none shrink-0"
         >
           <img
-            src="/image/Navbar_logo.png"
+            // src="/image/Navbar_logo.png"
+             src="/image/logo2.jpeg"
             alt="Propertytoday"
             className="h-16 w-auto object-contain"
           />
