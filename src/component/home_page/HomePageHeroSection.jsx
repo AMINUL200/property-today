@@ -1,561 +1,285 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   Building2,
   IndianRupee,
   Search,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   Home,
-  Building,
-  Trees,
   KeyRound,
-  ShieldCheck,
-  Landmark,
+  ArrowUpRight,
+  Check,
 } from "lucide-react";
 
-/* =========================================================
-   PLACEHOLDER IMAGERY
-========================================================= */
-
-const POOL = [
-  "https://picsum.photos/seed/ptoday-living/560/720",
-  "https://picsum.photos/seed/ptoday-tower/560/680",
-  "https://picsum.photos/seed/ptoday-villa/560/720",
-  "https://picsum.photos/seed/ptoday-office/560/680",
-  "https://picsum.photos/seed/ptoday-lobby/560/720",
-  "https://picsum.photos/seed/ptoday-lounge/560/680",
-  "https://picsum.photos/seed/ptoday-garden/560/720",
-  "https://picsum.photos/seed/ptoday-poolside/560/680",
-  "https://picsum.photos/seed/ptoday-terrace/560/720",
+const SEARCH_TABS = [
+  { label: "Buy", icon: Home },
+  { label: "Rent", icon: KeyRound },
+  { label: "Commercial", icon: Building2 },
+  { label: "Land & Plots", icon: MapPin },
 ];
 
-const POOL_SIZE = POOL.length;
-const MAX_MAG = Math.floor(POOL_SIZE / 2);
-
-const arcDelta = (i, slide, n) => {
-  let d = (i - slide) % n;
-
-  if (d > n / 2) d -= n;
-  if (d < -n / 2) d += n;
-
-  return d;
-};
-
-const arcTransform = (d) => {
-  const mag = Math.abs(d);
-  const side = Math.sign(d);
-
-  return {
-    x: `${side * (10 + (mag - 1) * 9)}vw`,
-    y: `${(mag - 1) * 1.9}vw`,
-    z: -(mag - 1) * 30,
-    rotateY: side * (12 + mag * 7),
-    scale: 1 - (mag - 1) * 0.13,
-    opacity: mag <= MAX_MAG ? 1 - (mag - 1) * 0.22 : 0,
-    zIndex: 30 - mag,
-  };
-};
-
-/* =========================================================
-   SEARCH DATA
-========================================================= */
-
-const SEARCH_TABS = ["Buy", "Rent", "Commercial", "Land & Plots"];
-
 const CITIES = [
-  "Select City",
-  "Delhi",
-  "Mumbai",
-  "Kolkata",
-  "Bangalore",
-  "Chennai",
-  "Hyderabad",
-  "Pune",
+  "Delhi", "Mumbai", "Kolkata", "Bangalore",
+  "Chennai", "Hyderabad", "Pune", "Ahmedabad",
+  "Jaipur", "Lucknow",
 ];
 
 const PROPERTY_TYPES = [
-  "Property Type",
-  "Apartment",
-  "Villa",
-  "Independent House",
-  "Office",
-  "Shop",
-  "Warehouse",
-  "Plot",
+  "Apartment", "Villa", "Independent House",
+  "Office", "Shop", "Warehouse", "Plot",
 ];
 
 const BUDGETS = [
-  "Budget",
   "Under ₹50 Lakh",
   "₹50 Lakh – 1 Cr",
   "₹1 Cr – 2 Cr",
-  "₹2 Cr+",
+  "₹2 Cr – 5 Cr",
+  "Above ₹5 Cr",
 ];
 
 const POPULAR_LOCATIONS = [
-  "Delhi",
-  "Mumbai",
-  "Kolkata",
-  "Bangalore",
-  "Chennai",
-  "Hyderabad",
+  "Delhi", "Mumbai", "Kolkata",
+  "Bangalore", "Chennai", "Hyderabad",
 ];
 
-/* =========================================================
-   QUICK LINKS
-========================================================= */
-
-const QUICK_LINKS = [
-  {
-    label: "Residential\nProperties",
-    icon: Home,
-    color: "var(--color-residential)",
-  },
-  {
-    label: "Commercial\nProperties",
-    icon: Building,
-    color: "var(--color-secondary-dark)",
-  },
-  {
-    label: "Land & Plots",
-    icon: Trees,
-    color: "var(--color-land)",
-  },
-  {
-    label: "Buy / Sell\nServices",
-    icon: KeyRound,
-    color: "var(--color-rental)",
-  },
-  {
-    label: "Property\nVerification",
-    icon: ShieldCheck,
-    color: "var(--color-investment)",
-  },
-  {
-    label: "Home Loan\nAssistance",
-    icon: Landmark,
-    color: "var(--color-warning)",
-  },
-];
-
-/* =========================================================
-   FILTER DROPDOWN COMPONENT
-========================================================= */
-
-const FilterDropdown = ({
+const SelectField = ({
   icon: Icon,
-  options,
+  label,
   value,
+  options,
   onChange,
-  isOpen,
-  onToggle,
 }) => {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (isOpen && ref.current && !ref.current.contains(e.target)) {
-        onToggle(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClick);
-
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [isOpen, onToggle]);
-
   return (
-    <div ref={ref} className="relative flex-1 min-w-[160px]">
-      <button
-        type="button"
-        onClick={() => onToggle(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-background-soft)] transition-colors duration-150"
-      >
-        <Icon className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" />
+    <div className="relative flex min-w-0 items-center gap-3 px-4 py-3 sm:px-5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary-light)]">
+        <Icon className="h-5 w-5 text-[var(--color-primary)]" />
+      </div>
 
-        <span className="truncate">{value}</span>
+      <div className="min-w-0 flex-1">
+        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+          {label}
+        </label>
 
-        <ChevronDown
-          className={`w-4 h-4 ml-auto text-[var(--color-text-muted)] transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </button>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full cursor-pointer appearance-none bg-transparent pr-6 text-sm font-bold text-[var(--color-navy)] outline-none"
+        >
+          <option value="">Select {label}</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 mt-2 w-56 bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-[999] overflow-hidden py-1"
-          >
-            {options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => {
-                  onChange(opt);
-                  onToggle(false);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors duration-150"
-              >
-                {opt}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ChevronDown className="pointer-events-none h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
     </div>
   );
 };
 
-/* =========================================================
-   HOME PAGE HERO SECTION
-========================================================= */
-
 const HomePageHeroSection = () => {
   const [activeTab, setActiveTab] = useState("Buy");
-  const [city, setCity] = useState(CITIES[0]);
-  const [propertyType, setPropertyType] = useState(PROPERTY_TYPES[0]);
-  const [budget, setBudget] = useState(BUDGETS[0]);
-  const [openDropdown, setOpenDropdown] = useState(null);
+  const [city, setCity] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [budget, setBudget] = useState("");
   const [activeCity, setActiveCity] = useState("Kolkata");
-  const [slide, setSlide] = useState(0);
 
-  const prefersReducedMotion = useReducedMotion();
-
-  /* Automatic slider */
-
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-
-    const id = setInterval(() => {
-      setSlide((s) => (s + 1) % POOL_SIZE);
-    }, 3200);
-
-    return () => clearInterval(id);
-  }, [prefersReducedMotion]);
-
-  const prevSlide = () => {
-    setSlide((s) => (s - 1 + POOL_SIZE) % POOL_SIZE);
+  const handlePopularCity = (location) => {
+    setActiveCity(location);
+    setCity(location);
   };
 
-  const nextSlide = () => {
-    setSlide((s) => (s + 1) % POOL_SIZE);
-  };
+  const handleSearch = () => {
+    const searchData = {
+      category: activeTab,
+      city,
+      propertyType,
+      budget,
+    };
 
-  /* Carousel images */
-
-  const arcImages = useMemo(
-    () =>
-      POOL.map((src, i) => ({
-        src,
-        key: i,
-        delta: arcDelta(i, slide, POOL_SIZE),
-      })).filter(
-        (img) => img.delta !== 0 && Math.abs(img.delta) <= MAX_MAG
-      ),
-    [slide]
-  );
-
-  /* Animations */
-
-  const containerVariants = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: 0.09,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: {
-      opacity: 0,
-      y: 18,
-    },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut",
-      },
-    },
+    console.log("Property Search:", searchData);
   };
 
   return (
-    <section className="relative bg-[var(--color-background-soft)]">
+    <section className="relative isolate overflow-hidden bg-[var(--color-navy)]">
 
-      {/* Ambient brand background */}
+      {/* Background image */}
 
       <div
-        className="pointer-events-none absolute inset-0"
+        className="absolute inset-0 -z-20 bg-cover bg-center"
         style={{
-          background:
-            "radial-gradient(60% 50% at 15% 20%, rgba(255,210,31,0.10) 0%, transparent 60%), radial-gradient(55% 45% at 85% 80%, rgba(200,16,30,0.08) 0%, transparent 60%)",
+          backgroundImage: "url('/image/hero-background.png')",
         }}
       />
 
-      {/* =====================================================
-          CURVED IMAGE CAROUSEL
-      ===================================================== */}
+      {/* Unified overlay */}
 
-      <div
-        className="hidden xl:block absolute inset-0 overflow-hidden"
-        style={{ perspective: 1800 }}
-      >
-        <div className="relative w-full h-full">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white/90 via-white/65 to-white/10" />
 
-          {arcImages.map(({ src, key, delta }) => {
-            const t = arcTransform(delta);
-            const mag = Math.abs(delta);
-            const h = 240 + (MAX_MAG - mag) * 42;
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-white/90 via-white/10 to-white/5" />
 
-            return (
-              <motion.img
-                key={key}
-                src={src}
-                alt=""
-                className="absolute top-[56%] left-1/2 w-44 object-cover rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)]"
-                style={{
-                  height: h,
-                  marginTop: -h / 2,
-                  marginLeft: -88,
-                  transformStyle: "preserve-3d",
-                }}
-                animate={{
-                  x: t.x,
-                  y: t.y,
-                  z: t.z,
-                  rotateY: t.rotateY,
-                  scale: t.scale,
-                  opacity: t.opacity,
-                  zIndex: t.zIndex,
-                }}
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0 }
-                    : {
-                        type: "spring",
-                        stiffness: 110,
-                        damping: 20,
-                        mass: 0.9,
-                      }
-                }
-              />
-            );
-          })}
+      <div className="mx-auto flex min-h-[780px] max-w-[1440px] flex-col justify-between px-4 pb-10 pt-28 sm:px-6 sm:pt-32 lg:min-h-[820px] lg:px-10 lg:pt-36">
 
-        </div>
-      </div>
+        {/* HERO HEADING */}
 
-      {/* Previous button */}
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="max-w-[850px] pb-10 lg:pb-12"
+        >
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/20 bg-white/75 px-4 py-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--color-primary)] shadow-sm backdrop-blur-md sm:text-xs">
+            <span className="h-2 w-2 rounded-full bg-[var(--color-primary)]" />
+            Your Trusted Property Dealing Partner
+          </span>
 
-      <button
-        type="button"
-        onClick={prevSlide}
-        aria-label="Previous"
-        className="hidden xl:flex absolute left-6 top-1/3 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full bg-white text-[var(--color-navy)] shadow-[var(--shadow-md)] hover:text-[var(--color-primary)] hover:-translate-x-0.5 transition-all duration-200"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
+          <h1 className="mt-6 font-serif text-4xl font-bold leading-[1.12] tracking-tight text-[var(--color-primary-dark)] sm:text-5xl md:text-6xl lg:text-[68px]">
+            Find the perfect match
+            <span className="mt-2 block text-[var(--color-primary)]">
+              for living, business or investment across India.
+            </span>
+          </h1>
 
-      {/* Next button */}
+          <p className="mt-5 max-w-xl text-sm leading-7 text-[var(--color-navy)] sm:text-base lg:text-lg">
+            Discover the right property for your lifestyle and goals.
+            Explore buying, renting, commercial spaces and land with
+            professional assistance from Propertytoday.
+          </p>
 
-      <button
-        type="button"
-        onClick={nextSlide}
-        aria-label="Next"
-        className="hidden xl:flex absolute right-6 top-1/3 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center rounded-full bg-white text-[var(--color-navy)] shadow-[var(--shadow-md)] hover:text-[var(--color-primary)] hover:translate-x-0.5 transition-all duration-200"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
+          <div className="mt-6 flex flex-wrap gap-5 text-xs font-bold text-[var(--color-navy)] sm:text-sm">
+            <span className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-[var(--color-primary)]" />
+              Verified Property Options
+            </span>
 
-      {/* =====================================================
-          MAIN HERO CONTENT
-      ===================================================== */}
+            <span className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-[var(--color-primary)]" />
+              Professional Assistance
+            </span>
+          </div>
+        </motion.div>
 
-      <div className="relative max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 pt-32 pb-16 lg:pt-40 lg:pb-20">
+        {/* UNIFIED SEARCH PANEL */}
 
-        <div className="relative flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 35 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="relative z-20 w-full"
+        >
+          <div className="overflow-visible rounded-[24px] border border-white/80 bg-white/95 shadow-[0_20px_70px_rgba(7,29,73,0.20)] backdrop-blur-xl sm:rounded-[30px]">
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="relative z-10 w-full max-w-[960px] text-center"
-          >
+            {/* CATEGORY TABS */}
 
-            {/* Main heading - no visible border */}
+            <div className="flex gap-1 overflow-x-auto border-b border-[var(--color-border)] px-3 pt-3 sm:px-5 sm:pt-4">
+              {SEARCH_TABS.map(({ label, icon: Icon }) => {
+                const active = activeTab === label;
 
-            <motion.h1
-              variants={itemVariants}
-              className="font-serif text-2xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-[var(--color-text)] w-full max-w-[960px] mx-auto text-center -mt-10"
-            >
-              Find the perfect property for living, business or investment
-              across India.
-            </motion.h1>
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setActiveTab(label)}
+                    className={`relative flex shrink-0 items-center gap-2 rounded-t-xl px-4 py-3 text-xs font-bold transition-all sm:px-7 sm:text-sm ${
+                      active
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)]"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
 
-            {/* Search tabs */}
+            {/* SEARCH FILTERS + BUTTON */}
 
-            <motion.div
-              variants={itemVariants}
-              className="mt-8 flex items-center justify-center gap-2 flex-wrap"
-            >
-              {SEARCH_TABS.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-2 text-sm font-semibold rounded-[var(--radius-md)] transition-all duration-200 ${
-                    activeTab === tab
-                      ? "bg-[var(--color-navy)] text-white shadow-[var(--shadow-md)]"
-                      : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:border-[var(--color-navy)]"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </motion.div>
+            <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 sm:gap-3 sm:p-5 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center">
 
-            {/* Search bar */}
+              <div className="rounded-xl border border-[var(--color-border)] bg-white transition-colors focus-within:border-[var(--color-primary)]">
+                <SelectField
+                  icon={MapPin}
+                  label="Location"
+                  value={city}
+                  options={CITIES}
+                  onChange={(value) => {
+                    setCity(value);
+                    setActiveCity(value);
+                  }}
+                />
+              </div>
 
-            <motion.div
-              variants={itemVariants}
-              className="relative z-30 mt-4 bg-white rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)] border border-[var(--color-border-light)] flex flex-col sm:flex-row items-stretch divide-y sm:divide-y-0 sm:divide-x divide-[var(--color-border-light)]"
-            >
+              <div className="rounded-xl border border-[var(--color-border)] bg-white transition-colors focus-within:border-[var(--color-primary)]">
+                <SelectField
+                  icon={Building2}
+                  label="Property Type"
+                  value={propertyType}
+                  options={PROPERTY_TYPES}
+                  onChange={setPropertyType}
+                />
+              </div>
 
-              <FilterDropdown
-                icon={MapPin}
-                options={CITIES}
-                value={city}
-                onChange={setCity}
-                isOpen={openDropdown === "city"}
-                onToggle={(open) =>
-                  setOpenDropdown(open ? "city" : null)
-                }
-              />
-
-              <FilterDropdown
-                icon={Building2}
-                options={PROPERTY_TYPES}
-                value={propertyType}
-                onChange={setPropertyType}
-                isOpen={openDropdown === "type"}
-                onToggle={(open) =>
-                  setOpenDropdown(open ? "type" : null)
-                }
-              />
-
-              <FilterDropdown
-                icon={IndianRupee}
-                options={BUDGETS}
-                value={budget}
-                onChange={setBudget}
-                isOpen={openDropdown === "budget"}
-                onToggle={(open) =>
-                  setOpenDropdown(open ? "budget" : null)
-                }
-              />
+              <div className="rounded-xl border border-[var(--color-border)] bg-white transition-colors focus-within:border-[var(--color-primary)]">
+                <SelectField
+                  icon={IndianRupee}
+                  label="Your Budget"
+                  value={budget}
+                  options={BUDGETS}
+                  onChange={setBudget}
+                />
+              </div>
 
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] transition-colors duration-200 whitespace-nowrap rounded-b-[var(--radius-xl)] sm:rounded-b-none sm:rounded-r-[var(--radius-xl)]"
+                onClick={handleSearch}
+                className="group flex min-h-[64px] items-center justify-center gap-3 rounded-xl bg-[var(--color-primary)] px-7 text-sm font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--color-primary-hover)] hover:shadow-xl sm:col-span-2 lg:col-span-1"
               >
-                <Search className="w-4 h-4" />
-                Search Properties
+                <Search className="h-5 w-5" />
+                <span>Search Properties</span>
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
               </button>
+            </div>
 
-            </motion.div>
+            {/* POPULAR LOCATIONS IN SAME PANEL */}
 
-            {/* Popular locations */}
+            <div className="border-t border-[var(--color-border)] px-4 py-4 sm:px-6 sm:py-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+                <div className="flex shrink-0 items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[var(--color-primary)]" />
+                  <span className="text-xs font-extrabold text-[var(--color-navy)] sm:text-sm">
+                    Popular Locations
+                  </span>
+                </div>
 
-            <motion.div
-              variants={itemVariants}
-              className="mt-6 flex items-center justify-center gap-2 flex-wrap text-sm"
-            >
-              <span className="font-semibold text-[var(--color-text)]">
-                Popular Locations:
-              </span>
+                <div className="flex flex-wrap gap-2">
+                  {POPULAR_LOCATIONS.map((location) => {
+                    const active = activeCity === location;
 
-              {POPULAR_LOCATIONS.map((loc) => (
-                <button
-                  key={loc}
-                  type="button"
-                  onClick={() => setActiveCity(loc)}
-                  className={`px-3 py-1 rounded-full transition-colors duration-150 ${
-                    activeCity === loc
-                      ? "font-bold text-[var(--color-primary)] underline underline-offset-4"
-                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
-                  }`}
-                >
-                  {loc}
-                </button>
-              ))}
-            </motion.div>
+                    return (
+                      <button
+                        key={location}
+                        type="button"
+                        onClick={() => handlePopularCity(location)}
+                        className={`rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 ${
+                          active
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm"
+                            : "border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                        }`}
+                      >
+                        {location}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
 
-            {/* Slider dots */}
-
-            <motion.div
-              variants={itemVariants}
-              className="mt-8 flex items-center justify-center gap-2"
-            >
-              {POOL.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  aria-label={`Rotate to image ${i + 1}`}
-                  onClick={() => setSlide(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    i === slide
-                      ? "w-6 bg-[var(--color-primary)]"
-                      : "w-2 bg-[var(--color-border-dark)]"
-                  }`}
-                />
-              ))}
-            </motion.div>
-
-          </motion.div>
-        </div>
-
-        {/* =====================================================
-            QUICK CATEGORY STRIP
-        ===================================================== */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.5 }}
-          className="relative z-20 mt-16 lg:mt-20 bg-white rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] border border-[var(--color-border-light)] px-6 sm:px-8 py-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8"
-        >
-
-          {QUICK_LINKS.map(({ label, icon: Icon, color }) => (
-            <button
-              key={label}
-              type="button"
-              className="hover-lift group flex flex-col sm:flex-row items-center sm:items-start gap-3 text-center sm:text-left"
-            >
-              <span
-                className="w-12 h-12 shrink-0 rounded-full flex items-center justify-center shadow-[var(--shadow-sm)] transition-transform duration-200 group-hover:scale-105"
-                style={{ backgroundColor: color }}
-              >
-                <Icon className="w-5 h-5 text-white" />
-              </span>
-
-              <span className="text-sm font-semibold text-[var(--color-navy)] whitespace-pre-line leading-snug">
-                {label}
-              </span>
-            </button>
-          ))}
-
+          </div>
         </motion.div>
 
       </div>
